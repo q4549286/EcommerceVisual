@@ -1,0 +1,43 @@
+{
+  "name": "ecommerce-visual-generator",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "check": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "admin:list": "node scripts/admin.mjs list",
+    "admin:promote": "node scripts/admin.mjs promote",
+    "admin:demote": "node scripts/admin.mjs demote",
+    "admin:enable": "node scripts/admin.mjs enable",
+    "admin:disable": "node scripts/admin.mjs disable"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1048.0",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "dotenv": "^17.4.2",
+    "next": "^16.2.6",
+    "pg": "^8.20.0",
+    "prisma": "^7.8.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "10.4.20",
+    "postcss": "^8.5.10",
+    "tailwindcss": "3.4.15",
+    "typescript": "5.6.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
+  }
+}

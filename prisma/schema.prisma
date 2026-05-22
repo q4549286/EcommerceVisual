@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum CreditRecordType {
+  LOGIN_BONUS
+  GENERATION_DEBIT
+  GENERATION_REFUND
+  ADMIN_ADJUSTMENT
+}
+
+enum SystemLogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+model User {
+  id            String         @id @default(cuid())
+  phone         String         @unique
+  passwordHash  String
+  role          UserRole       @default(USER)
+  status        UserStatus     @default(ACTIVE)
+  credits       Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  lastLoginAt   DateTime?
+  sessions      Session[]
+  creditRecords CreditRecord[]
+  apiLogs       ApiLog[]
+  systemLogs    SystemLog[]
+  generations   Generation[]
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  lastUsedAt DateTime?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model CreditRecord {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          CreditRecordType
+  amount        Int
+  balanceBefore Int
+  balanceAfter  Int
+  note          String?
+  generationId  String?
+  generation    Generation?      @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  createdAt     DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([generationId])
+}
+
+model Generation {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productName    String
+  language       String
+  imageCount     Int
+  successCount   Int               @default(0)
+  failCount      Int               @default(0)
+  creditsCharged Int               @default(0)
+  input          Json
+  createdAt      DateTime          @default(now())
+  images         GenerationImage[]
+  creditRecords  CreditRecord[]
+
+  @@index([userId, createdAt])
+}
+
+model GenerationImage {
+  id           String     @id @default(cuid())
+  generationId String
+  generation   Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  type         String
+  title        String
+  size         String
+  ok           Boolean
+  imageUrl     String?
+  error        String?
+  createdAt    DateTime   @default(now())
+
+  @@index([generationId])
+}
+
+model ApiLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  endpoint   String
+  method     String
+  action     String
+  model      String?
+  imageType  String?
+  size       String?
+  status     Int
+  durationMs Int
+  ok         Boolean
+  error      String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model SystemLog {
+  id        String         @id @default(cuid())
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  level     SystemLogLevel @default(INFO)
+  action    String
+  message   String
+  metadata  Json?
+  createdAt DateTime       @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>原型 B · 顶部表单 + 纵向流</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .ph-img { background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 8px, #e2e8f0 8px, #e2e8f0 16px); }
+  .indeterminate { background-image: linear-gradient(90deg, transparent, #0f172a, transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: slide 1.4s linear infinite; }
+  @keyframes slide { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+  .fade-in { animation: fade 0.2s ease-out; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="px-8 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="./index.html" class="text-xs text-slate-400 hover:text-slate-900">← 原型对比</a>
+        <span class="text-slate-300">|</span>
+        <h1 class="text-base font-semibold">商品图生成器</h1>
+        <span class="text-xs text-slate-400">原型 B · 纵向流</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openModal('historyModal')" class="text-sm border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50">历史记录</button>
+        <button onclick="openModal('logModal')" class="text-sm border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50">调用日志</button>
+      </div>
+    </div>
+
+    <!-- Compact form bar -->
+    <div class="border-t border-slate-100 px-8 py-3 bg-slate-50/50">
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Upload thumb -->
+        <button class="ph-img w-14 h-14 rounded border border-slate-200 hover:border-slate-900 shrink-0 flex items-center justify-center" title="上传商品图">
+          <span class="text-xs bg-white px-1.5 py-0.5 rounded">上传</span>
+        </button>
+
+        <!-- Name -->
+        <input value="可携式果汁机" class="flex-1 min-w-[180px] max-w-xs border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder="商品名称" />
+
+        <!-- Types chips -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button class="border border-slate-900 bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded">白底首图 ✓</button>
+          <button class="border border-slate-900 bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded">亮点介绍图 ✓</button>
+          <button class="border border-slate-900 bg-slate-900 text-white text-xs px-2.5 py-1.5 rounded">细节规格图 ✓</button>
+          <button class="border border-slate-200 text-slate-600 text-xs px-2.5 py-1.5 rounded hover:border-slate-400">使用场景图</button>
+        </div>
+
+        <!-- Language -->
+        <select class="border border-slate-200 rounded px-3 py-2 text-sm bg-white">
+          <option>繁體中文</option>
+          <option>英文</option>
+        </select>
+
+        <button onclick="toggleMore()" class="text-xs text-slate-500 hover:text-slate-900 underline px-2">更多</button>
+
+        <div class="grow"></div>
+
+        <button onclick="startGenerate()" class="bg-slate-900 text-white text-sm px-5 py-2 rounded hover:bg-black">生成</button>
+      </div>
+
+      <div id="moreFields" class="hidden mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+        <input class="border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder="品牌" />
+        <input class="border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder="材质" />
+        <input class="border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder="尺寸" />
+        <input class="border border-slate-200 rounded px-3 py-2 text-sm bg-white" placeholder="颜色" />
+      </div>
+    </div>
+  </header>
+
+  <!-- Feed -->
+  <main class="px-8 py-8 max-w-5xl mx-auto space-y-5">
+
+    <!-- Feed item: latest, just generated -->
+    <article class="bg-white border border-slate-200 rounded">
+      <header class="px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+        <span class="text-xs text-slate-400">#003</span>
+        <h2 class="text-sm font-semibold">可携式果汁机</h2>
+        <span class="text-xs text-slate-500">繁體中文 · 3 张 · 刚刚</span>
+        <div class="grow"></div>
+        <button class="text-xs text-slate-500 hover:text-slate-900 underline">复制提示词</button>
+        <button class="text-xs text-slate-500 hover:text-slate-900 underline">全部下载</button>
+      </header>
+      <div class="grid md:grid-cols-3 gap-px bg-slate-100">
+        <button onclick="openLightbox('白底首图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-44 rounded mb-2"></div>
+          <p class="text-xs font-medium">白底首图</p>
+          <p class="text-[11px] text-slate-500">2048×2048</p>
+        </button>
+        <button onclick="openLightbox('亮点介绍图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-44 rounded mb-2"></div>
+          <p class="text-xs font-medium">亮点介绍图</p>
+          <p class="text-[11px] text-slate-500">2048×2048</p>
+        </button>
+        <button onclick="openLightbox('细节规格图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-44 rounded mb-2"></div>
+          <p class="text-xs font-medium">细节规格图</p>
+          <p class="text-[11px] text-slate-500">1600×2000</p>
+        </button>
+      </div>
+    </article>
+
+    <!-- Feed item: earlier -->
+    <article class="bg-white border border-slate-200 rounded">
+      <header class="px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+        <span class="text-xs text-slate-400">#002</span>
+        <h2 class="text-sm font-semibold">不锈钢保温杯 500ml</h2>
+        <span class="text-xs text-slate-500">英文 · 4 张 · 14:08</span>
+        <div class="grow"></div>
+        <button class="text-xs text-slate-500 hover:text-slate-900 underline">复制提示词</button>
+        <button class="text-xs text-slate-500 hover:text-slate-900 underline">全部下载</button>
+      </header>
+      <div class="grid md:grid-cols-4 gap-px bg-slate-100">
+        <button onclick="openLightbox('白底首图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-36 rounded mb-2"></div>
+          <p class="text-xs font-medium">白底首图</p>
+        </button>
+        <button onclick="openLightbox('亮点介绍图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-36 rounded mb-2"></div>
+          <p class="text-xs font-medium">亮点介绍图</p>
+        </button>
+        <button onclick="openLightbox('细节规格图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-36 rounded mb-2"></div>
+          <p class="text-xs font-medium">细节规格图</p>
+        </button>
+        <button onclick="openLightbox('使用场景图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-36 rounded mb-2"></div>
+          <p class="text-xs font-medium">使用场景图</p>
+        </button>
+      </div>
+    </article>
+
+    <!-- Feed item: failed -->
+    <article class="bg-white border border-slate-200 rounded">
+      <header class="px-5 py-3 border-b border-slate-200 flex items-center gap-3">
+        <span class="text-xs text-slate-400">#001</span>
+        <h2 class="text-sm font-semibold">折叠收纳箱</h2>
+        <span class="text-xs text-slate-500">繁體中文 · 1 张失败 · 昨天 18:42</span>
+        <div class="grow"></div>
+        <span class="text-xs text-red-600">部分失败</span>
+        <button class="text-xs text-slate-500 hover:text-slate-900 underline">重试</button>
+      </header>
+      <div class="grid md:grid-cols-3 gap-px bg-slate-100">
+        <button onclick="openLightbox('白底首图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-44 rounded mb-2"></div>
+          <p class="text-xs font-medium">白底首图</p>
+        </button>
+        <button onclick="openLightbox('亮点介绍图')" class="bg-white p-4 hover:bg-slate-50 text-left">
+          <div class="ph-img h-44 rounded mb-2"></div>
+          <p class="text-xs font-medium">亮点介绍图</p>
+        </button>
+        <div class="bg-white p-4">
+          <div class="h-44 rounded border border-dashed border-red-300 bg-red-50/50 flex items-center justify-center mb-2">
+            <span class="text-xs text-red-600">429 限流，已重试 2 次</span>
+          </div>
+          <p class="text-xs font-medium text-red-600">细节规格图 · 失败</p>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Loading overlay -->
+  <div id="loading" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center fade-in">
+    <div class="bg-white rounded-lg p-8 w-[440px] shadow-2xl">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="text-base font-semibold">正在生成图片</h3>
+        <span id="progressLabel" class="text-sm text-slate-500">0%</span>
+      </div>
+      <p class="text-xs text-slate-500 mb-5" id="loadingStep">连接生图接口...</p>
+
+      <div class="relative h-1.5 bg-slate-100 rounded overflow-hidden mb-2">
+        <div id="progressFill" class="absolute inset-y-0 left-0 bg-slate-900 transition-all duration-300" style="width: 0%"></div>
+      </div>
+      <div class="h-1 indeterminate rounded mb-6"></div>
+
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center gap-2" data-step="0">
+          <span class="step-dot w-1.5 h-1.5 rounded-full bg-slate-900"></span>
+          <span class="step-text text-slate-900">连接生图接口</span>
+        </div>
+        <div class="flex items-center gap-2" data-step="1">
+          <span class="step-dot w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+          <span class="step-text text-slate-400">生成 白底首图</span>
+        </div>
+        <div class="flex items-center gap-2" data-step="2">
+          <span class="step-dot w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+          <span class="step-text text-slate-400">生成 亮点介绍图</span>
+        </div>
+        <div class="flex items-center gap-2" data-step="3">
+          <span class="step-dot w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+          <span class="step-text text-slate-400">生成 细节规格图</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-between text-xs text-slate-500">
+        <span>预计耗时 30-180 秒</span>
+        <button onclick="cancelGenerate()" class="text-slate-500 hover:text-slate-900 underline">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History modal -->
+  <div id="historyModal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-6 fade-in" onclick="closeIfBg(event,'historyModal')">
+    <div class="bg-white rounded-lg w-full max-w-3xl max-h-[80vh] flex flex-col shadow-2xl">
+      <div class="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+        <h3 class="font-semibold">历史记录（按时间倒序）</h3>
+        <button onclick="closeModal('historyModal')" class="text-slate-400 hover:text-slate-900 text-lg leading-none">✕</button>
+      </div>
+      <div class="overflow-auto divide-y divide-slate-100">
+        <div class="px-6 py-4 hover:bg-slate-50 cursor-pointer flex items-center gap-4">
+          <div class="ph-img w-16 h-16 rounded shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">可携式果汁机</p>
+            <p class="text-xs text-slate-500 mt-0.5">3 张 · 繁體中文 · 刚刚</p>
+          </div>
+          <button class="text-xs border border-slate-200 px-2.5 py-1 rounded">滚动到此</button>
+        </div>
+        <div class="px-6 py-4 hover:bg-slate-50 cursor-pointer flex items-center gap-4">
+          <div class="ph-img w-16 h-16 rounded shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">不锈钢保温杯 500ml</p>
+            <p class="text-xs text-slate-500 mt-0.5">4 张 · 英文 · 14:08</p>
+          </div>
+          <button class="text-xs border border-slate-200 px-2.5 py-1 rounded">滚动到此</button>
+        </div>
+        <div class="px-6 py-4 hover:bg-slate-50 cursor-pointer flex items-center gap-4">
+          <div class="ph-img w-16 h-16 rounded shrink-0"></div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">折叠收纳箱</p>
+            <p class="text-xs text-slate-500 mt-0.5">部分失败 · 繁體中文 · 昨天 18:42</p>
+          </div>
+          <button class="text-xs border border-slate-200 px-2.5 py-1 rounded">滚动到此</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log modal -->
+  <div id="logModal" class="hidden fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-6 fade-in" onclick="closeIfBg(event,'logModal')">
+    <div class="bg-white rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl">
+      <div class="border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+        <h3 class="font-semibold">调用日志</h3>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-500">共 12 条</span>
+          <button class="text-xs border border-slate-200 px-2.5 py-1 rounded">导出</button>
+          <button class="text-xs border border-slate-200 px-2.5 py-1 rounded">清空</button>
+          <button onclick="closeModal('logModal')" class="ml-2 text-slate-400 hover:text-slate-900 text-lg leading-none">✕</button>
+        </div>
+      </div>
+      <div class="overflow-auto font-mono text-xs p-6 space-y-3 bg-slate-50">
+        <div class="bg-white border border-slate-200 rounded p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px]">200</span>
+              <span class="text-slate-700">POST /v1/images/edits</span>
+            </div>
+            <span class="text-slate-400">19:24:08 · 42.1s</span>
+          </div>
+          <div class="text-slate-500">model=gpt-image-2 size=2048x2048 type=main_white_bg</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px]">200</span>
+              <span class="text-slate-700">POST /v1/images/edits</span>
+            </div>
+            <span class="text-slate-400">19:23:25 · 38.7s</span>
+          </div>
+          <div class="text-slate-500">model=gpt-image-2 size=2048x2048 type=feature_infographic</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 rounded bg-red-100 text-red-700 text-[10px]">429</span>
+              <span class="text-slate-700">POST /v1/images/edits</span>
+            </div>
+            <span class="text-slate-400">19:22:46 · 2.3s</span>
+          </div>
+          <div class="text-red-600">rate limit reached, retrying in 1.5s</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded p-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px]">200</span>
+              <span class="text-slate-700">POST /v1/images/edits</span>
+            </div>
+            <span class="text-slate-400">19:22:08 · 31.2s</span>
+          </div>
+          <div class="text-slate-500">model=gpt-image-2 size=1600x2000 type=detail_specs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center fade-in" onclick="closeModal('lightbox')">
+    <div class="relative">
+      <div class="ph-img w-[640px] h-[640px] flex items-center justify-center rounded">
+        <span class="text-slate-400 text-sm bg-white px-3 py-1 rounded">商品图预览</span>
+      </div>
+      <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs bg-black/40 backdrop-blur px-3 py-2 rounded">
+        <span id="lightboxTitle">白底首图</span>
+        <div class="flex gap-3">
+          <button class="hover:underline">下载原图</button>
+          <button class="hover:underline" onclick="event.stopPropagation(); closeModal('lightbox')">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function closeIfBg(e, id) { if (e.target.id === id) closeModal(id); }
+    function openLightbox(title) {
+      document.getElementById('lightboxTitle').textContent = title;
+      openModal('lightbox');
+    }
+    function toggleMore() {
+      document.getElementById('moreFields').classList.toggle('hidden');
+    }
+
+    let loadingTimer = null;
+    function startGenerate() {
+      const loading = document.getElementById('loading');
+      loading.classList.remove('hidden');
+      let p = 0;
+      const fill = document.getElementById('progressFill');
+      const label = document.getElementById('progressLabel');
+      const step = document.getElementById('loadingStep');
+      const stepNames = ['连接生图接口...', '生成 白底首图...', '生成 亮点介绍图...', '生成 细节规格图...', '完成'];
+      const dots = document.querySelectorAll('[data-step]');
+      loadingTimer = setInterval(() => {
+        p = Math.min(p + Math.random() * 6 + 2, 100);
+        fill.style.width = p + '%';
+        label.textContent = Math.floor(p) + '%';
+        const idx = Math.min(Math.floor(p / 25), stepNames.length - 1);
+        step.textContent = stepNames[idx];
+        dots.forEach((el, i) => {
+          const dot = el.querySelector('.step-dot');
+          const text = el.querySelector('.step-text');
+          if (i < idx) { dot.classList.add('bg-slate-900'); dot.classList.remove('bg-slate-200'); text.classList.add('text-slate-500'); text.classList.remove('text-slate-400', 'text-slate-900'); }
+          else if (i === idx) { dot.classList.add('bg-slate-900'); dot.classList.remove('bg-slate-200'); text.classList.add('text-slate-900'); text.classList.remove('text-slate-400', 'text-slate-500'); }
+        });
+        if (p >= 100) {
+          clearInterval(loadingTimer);
+          setTimeout(() => loading.classList.add('hidden'), 500);
+        }
+      }, 350);
+    }
+    function cancelGenerate() {
+      if (loadingTimer) clearInterval(loadingTimer);
+      closeModal('loading');
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        ['historyModal', 'logModal', 'lightbox'].forEach(closeModal);
+      }
+    });
+  </script>
+</body>
+</html>
