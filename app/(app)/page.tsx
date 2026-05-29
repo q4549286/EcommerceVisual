@@ -426,18 +426,18 @@ export default function WorkspacePage() {
             <button
               type="button"
               onClick={openFileDialog}
-              className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+              className="flex h-full min-h-32 w-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
               aria-label="上传产品图"
             >
               {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-40 w-full rounded-3xl object-cover" /> : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传产品图</span></>}
             </button>
-            <div className="flex flex-col">
+            <div className="relative h-full min-h-32">
               <button
                 type="button"
                 onClick={openReferenceDialog}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={onReferenceDrop}
-                className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+                className="flex h-full w-full min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
                 aria-label="上传参考图"
               >
                 {referencePreviewUrls.length > 0 ? (
@@ -446,7 +446,7 @@ export default function WorkspacePage() {
                   </div>
                 ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传参考图</span></>}
               </button>
-              <span className="mt-1 px-1 text-center text-[11px] text-white/[0.38]">（可选）</span>
+              <span className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-[11px] text-white/[0.38]">（可选）</span>
             </div>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
             <input ref={referenceInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onReferenceChange} className="hidden" />
