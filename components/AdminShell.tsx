@@ -6,19 +6,17 @@ import type { ReactNode } from "react";
 import { useUserSession } from "@/components/UserSession";
 
 const adminNav = [
-  { href: "/admin", label: "数据看板", exact: true },
-  { href: "/admin/users", label: "用户管理" },
-  { href: "/admin/generations", label: "生成记录" },
-  { href: "/admin/credits", label: "积分流水" },
-  { href: "/admin/logs/api", label: "API 日志" },
+  { href: "/admin/logs/api", label: "调用日志" },
   { href: "/admin/logs/system", label: "系统日志" },
-  { href: "/admin/settings", label: "系统设置" }
+  { href: "/admin/generations", label: "生成记录" },
+  { href: "/admin/users", label: "用户管理" },
+  { href: "/admin/credits", label: "积分流水" }
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useUserSession();
-  const current = adminNav.find((item) => (item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)));
+  const current = adminNav.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900">
@@ -31,7 +29,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">运营</div>
           <ul className="space-y-1">
             {adminNav.map((item) => {
-              const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <li key={item.href}>
                   <Link

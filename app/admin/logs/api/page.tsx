@@ -78,7 +78,7 @@ export default function AdminApiLogsPage() {
   return (
     <div className="px-6 py-6">
       <PageHeader
-        title="API 调用日志"
+        title="调用日志"
         description="所有图片生成请求的详细日志，支持按用户、状态筛选。"
         actions={<Button variant="secondary" size="sm" onClick={load}>刷新</Button>}
       />

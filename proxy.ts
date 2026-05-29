@@ -18,10 +18,18 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   const { pathname, search } = request.nextUrl;
 
+  if (token && (pathname === "/admin" || pathname === "/admin/settings")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/logs/api";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   if (!token && isProtected(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = `?next=${encodeURIComponent(pathname + search)}`;
+    const nextPath = pathname === "/admin" || pathname === "/admin/settings" ? "/admin/logs/api" : pathname;
+    url.search = `?next=${encodeURIComponent(nextPath + search)}`;
     return NextResponse.redirect(url);
   }
 

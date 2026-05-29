@@ -9,7 +9,7 @@ import { useUserSession } from "@/components/UserSession";
 const navItems = [
   { href: "/", label: "首页", mark: "⌂" },
   { href: "/history", label: "历史", mark: "▣" },
-  { href: "/admin/settings", label: "API", mark: "⚙" }
+  { href: "/admin/logs/api", label: "日志", mark: "≣" }
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -34,8 +34,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <div className="flex items-center gap-2">
           {user?.role === "ADMIN" ? (
-            <Link href="/admin/settings" className="hidden rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-white/75 backdrop-blur hover:bg-white/[0.15] sm:inline-flex">
-              API 管理
+            <Link href="/admin/logs/api" className="hidden rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-white/75 backdrop-blur hover:bg-white/[0.15] sm:inline-flex">
+              日志
             </Link>
           ) : null}
           {user ? (
