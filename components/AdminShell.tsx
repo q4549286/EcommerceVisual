@@ -8,9 +8,7 @@ import { useUserSession } from "@/components/UserSession";
 const adminNav = [
   { href: "/admin/logs/api", label: "调用日志" },
   { href: "/admin/logs/system", label: "系统日志" },
-  { href: "/admin/generations", label: "生成记录" },
-  { href: "/admin/users", label: "用户管理" },
-  { href: "/admin/credits", label: "积分流水" }
+  { href: "/admin/generations", label: "生成记录" }
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
