@@ -423,7 +423,7 @@ export default function WorkspacePage() {
       const data: { ok: boolean; analysis?: ProductAnalysis; error?: string } = await response.json();
       if (!data.ok || !data.analysis) throw new Error(data.error || "商品识别失败。");
       applyAnalysis(data.analysis);
-      show("已自动识别并回填商品信息", "success");
+      show("已自动填写下列信息", "success");
     } catch (err) {
       const message = err instanceof Error ? err.message : "商品识别失败。";
       setError(message);
@@ -535,8 +535,8 @@ export default function WorkspacePage() {
               </select>
               {generationMode === "image_to_image" && referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
               {generationMode === "image_to_image" ? (
-                <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
-                  {isAnalyzing ? "识别中" : "自动识别"}
+                <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
+                  {isAnalyzing ? "填写中" : "自动填写下列信息"}
                 </button>
               ) : null}
               <button type="button" onClick={() => runGeneration(selectedTypes)} disabled={isLoading || isAnalyzing} className="ml-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-black shadow-lg transition hover:scale-105 disabled:opacity-50">
@@ -564,21 +564,21 @@ export default function WorkspacePage() {
           </FieldBlock>
         </div>
 
-        <details className="mt-4">
-          <summary className="cursor-pointer rounded-2xl border border-white/[0.08] bg-black/25 px-4 py-3 text-sm text-white/70">高级参数、图片类型与卖点</summary>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FieldBlock label="品牌"><input value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} /></FieldBlock>
-              <FieldBlock label="材质"><input value={material} onChange={(e) => setMaterial(e.target.value)} className={inputClass} /></FieldBlock>
-              <FieldBlock label="尺寸参数"><input value={size} onChange={(e) => setSize(e.target.value)} className={inputClass} /></FieldBlock>
-              <FieldBlock label="颜色"><input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} /></FieldBlock>
-              <FieldBlock label="适用人群"><input value={audience} onChange={(e) => setAudience(e.target.value)} className={inputClass} /></FieldBlock>
-              <FieldBlock label="避免词"><input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="假价格、二维码、水印" className={inputClass} /></FieldBlock>
-            </div>
-            <div className="space-y-3">
-              <FieldBlock label="核心卖点">
-                <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={4} placeholder="每行一个卖点" className={`${inputClass} resize-none`} />
-              </FieldBlock>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FieldBlock label="品牌"><input value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} /></FieldBlock>
+            <FieldBlock label="材质"><input value={material} onChange={(e) => setMaterial(e.target.value)} className={inputClass} /></FieldBlock>
+            <FieldBlock label="尺寸参数"><input value={size} onChange={(e) => setSize(e.target.value)} className={inputClass} /></FieldBlock>
+            <FieldBlock label="颜色"><input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} /></FieldBlock>
+            <FieldBlock label="适用人群"><input value={audience} onChange={(e) => setAudience(e.target.value)} className={inputClass} /></FieldBlock>
+            <FieldBlock label="避免词"><input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="假价格、二维码、水印" className={inputClass} /></FieldBlock>
+          </div>
+          <div className="space-y-3">
+            <FieldBlock label="核心卖点">
+              <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={4} placeholder="每行一个卖点" className={`${inputClass} resize-none`} />
+            </FieldBlock>
+            <div>
+              <div className="mb-2 text-xs font-medium text-white/[0.55]">默认生成图片</div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {imageTypeOptions.map((item) => {
                   const active = selectedTypes.includes(item.key);
@@ -596,7 +596,7 @@ export default function WorkspacePage() {
               </div>
             </div>
           </div>
-        </details>
+        </div>
       </section>
 
       {plans.length > 0 ? (
