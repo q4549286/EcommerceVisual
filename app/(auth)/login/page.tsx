@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { CSSProperties, FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Buttons";
 import { useUserSession } from "@/components/UserSession";
 import { apiFetch } from "@/lib/client-api";
@@ -16,10 +16,15 @@ export default function LoginPage() {
 
   const [baseUrl, setBaseUrl] = useState("https://aispeedapi.com/v1");
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("gpt-image-2");
+  const [model, setModel] = useState("image2");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const fieldClass = "w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-white/30 focus:bg-white/10";
+  const fieldClass = "w-full rounded-2xl border border-white/10 px-4 py-3 text-sm outline-none placeholder:text-white/30 focus:border-white/30";
+  const fieldStyle: CSSProperties = {
+    backgroundColor: "#181818",
+    color: "#ffffff",
+    WebkitTextFillColor: "#ffffff"
+  };
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -80,6 +85,7 @@ export default function LoginPage() {
                 onChange={(event) => setBaseUrl(event.target.value)}
                 placeholder="https://api.openai.com/v1"
                 className={fieldClass}
+                style={fieldStyle}
               />
             </label>
             <label className="block">
@@ -94,6 +100,7 @@ export default function LoginPage() {
                 placeholder="sk-..."
                 autoComplete="off"
                 className={fieldClass}
+                style={fieldStyle}
               />
             </label>
             <label className="block">
@@ -101,8 +108,9 @@ export default function LoginPage() {
               <input
                 value={model}
                 onChange={(event) => setModel(event.target.value)}
-                placeholder="gpt-image-2"
+                placeholder="image2"
                 className={fieldClass}
+                style={fieldStyle}
               />
             </label>
 

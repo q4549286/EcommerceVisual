@@ -133,7 +133,7 @@ export async function getImageApiSettings(includeSecret = false): Promise<ImageA
   return {
     baseUrl: stringValue(value.baseUrl) || stringValue(process.env.IMAGE_API_BASE),
     apiKey: includeSecret ? storedApiKey || envApiKey : "",
-    model: stringValue(value.model) || stringValue(process.env.IMAGE_MODEL),
+    model: stringValue(value.model) || stringValue(process.env.IMAGE_MODEL) || "image2",
     keyConfigured: Boolean(storedApiKey || envApiKey)
   };
 }

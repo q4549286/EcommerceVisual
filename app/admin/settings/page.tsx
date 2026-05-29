@@ -47,7 +47,7 @@ const defaultImageStorage: AdminSettings["imageStorage"] = {
 const defaultImageApi: AdminSettings["imageApi"] = {
   baseUrl: "",
   apiKey: "",
-  model: "",
+  model: "image2",
   keyConfigured: false
 };
 
