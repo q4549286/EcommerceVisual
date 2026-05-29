@@ -4,11 +4,14 @@ import type { NextResponse } from "next/server";
 import { grantLoginCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
 import { writeSystemLog } from "@/lib/server-logs";
+import { setImageApiSettings } from "@/lib/settings";
 import type { AuthUser } from "@/lib/types";
 
 const scrypt = promisify(scryptCallback);
 const SESSION_COOKIE = "ecv_session";
 const SESSION_DAYS = 30;
+const API_WORKSPACE_PHONE = "api-manager";
+const API_WORKSPACE_CREDITS = 1_000_000;
 
 export class AuthError extends Error {
   status: number;
@@ -76,13 +79,42 @@ function toAuthUser(user: {
 }): AuthUser {
   return {
     id: user.id,
-    phone: user.phone,
+    phone: user.phone === API_WORKSPACE_PHONE ? "API 管理模式" : user.phone,
     role: user.role as AuthUser["role"],
     status: user.status as AuthUser["status"],
     credits: user.credits,
     createdAt: user.createdAt.toISOString(),
     lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null
   };
+}
+
+async function ensureApiWorkspaceUser() {
+  const existing = await prisma.user.findUnique({
+    where: { phone: API_WORKSPACE_PHONE }
+  });
+
+  if (existing) {
+    return prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        role: "ADMIN",
+        status: "ACTIVE",
+        credits: existing.credits < 1000 ? API_WORKSPACE_CREDITS : existing.credits,
+        lastLoginAt: new Date()
+      }
+    });
+  }
+
+  return prisma.user.create({
+    data: {
+      phone: API_WORKSPACE_PHONE,
+      passwordHash: await hashPassword(randomBytes(24).toString("base64url")),
+      role: "ADMIN",
+      status: "ACTIVE",
+      credits: API_WORKSPACE_CREDITS,
+      lastLoginAt: new Date()
+    }
+  });
 }
 
 export async function createSession(userId: string) {
@@ -256,6 +288,42 @@ export async function loginWithPassword(phone: string, password: string) {
 
   return {
     user: toAuthUser({ ...updated, credits }),
+    session
+  };
+}
+
+export async function loginWithApiSettings(input: { baseUrl: string; apiKey: string; model: string }) {
+  const baseUrl = input.baseUrl.trim().replace(/\/$/, "");
+  const apiKey = input.apiKey.trim();
+  const model = input.model.trim();
+
+  if (!/^https?:\/\/.+/i.test(baseUrl)) {
+    throw new AuthError("请输入有效的 API Base URL。", 400);
+  }
+  if (!apiKey || apiKey.length < 12) {
+    throw new AuthError("请输入有效的 API Key。", 400);
+  }
+  if (!model) {
+    throw new AuthError("请输入图片模型名称。", 400);
+  }
+
+  await setImageApiSettings({ baseUrl, apiKey, model });
+  const user = await ensureApiWorkspaceUser();
+  const session = await createSession(user.id);
+
+  await writeSystemLog({
+    userId: user.id,
+    action: "auth.api_manager_login",
+    message: "通过 API 管理进入工作区",
+    metadata: {
+      baseUrl,
+      model,
+      apiKeyConfigured: true
+    }
+  });
+
+  return {
+    user: toAuthUser(user),
     session
   };
 }
