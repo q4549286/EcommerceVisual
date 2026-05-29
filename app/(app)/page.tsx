@@ -24,7 +24,7 @@ const platformOptions: { value: PlatformKey; label: string }[] = [
   { value: "douyin", label: "抖音电商" },
   { value: "pdd", label: "拼多多" },
   { value: "rednote", label: "小红书店铺" },
-  { value: "generic", label: "通用电商" }
+  { value: "generic", label: "跨境电商" }
 ];
 
 const listingIntentOptions: { value: ListingIntent; label: string }[] = [

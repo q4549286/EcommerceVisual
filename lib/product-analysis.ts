@@ -24,7 +24,7 @@ function isChineseLanguage(language: Language) {
 
 function platformName(platform?: PlatformKey) {
   const names: Record<PlatformKey, string> = {
-    generic: "通用电商",
+    generic: "跨境电商",
     meituan_waimai: "美团外卖",
     meituan_flash: "美团闪购",
     taobao_tmall: "淘宝/天猫",
@@ -102,6 +102,8 @@ function normalizeAnalysis(value: Record<string, unknown>): ProductAnalysis {
 function buildAnalysisPrompt(language: Language, platform?: PlatformKey) {
   const outputLanguage = languageName(language);
   const targetPlatform = platformName(platform);
+  const platformScope = platform === "generic" ? "跨境电商平台" : "中国电商平台";
+  const englishPlatformScope = platform === "generic" ? "cross-border ecommerce marketplace" : "Chinese ecommerce marketplace";
   const schema = `{
   "productName": "short product name",
   "category": "marketplace category",
@@ -117,7 +119,7 @@ function buildAnalysisPrompt(language: Language, platform?: PlatformKey) {
 
   if (isChineseLanguage(language)) {
     return [
-      `你是熟悉中国电商平台的商品上架运营，目标平台：${targetPlatform}。`,
+      `你是熟悉${platformScope}的商品上架运营，目标平台：${targetPlatform}。`,
       "请根据上传的商品图，识别并补全后续生成详情图需要的商品资料。只返回 JSON，不要解释。",
       `所有面向用户的字段值都用${outputLanguage}。JSON 字段名必须保持英文。`,
       "不要编造图片中看不出或无法谨慎推断的事实；不确定时用保守表达或留空。",
@@ -130,7 +132,7 @@ function buildAnalysisPrompt(language: Language, platform?: PlatformKey) {
   }
 
   return [
-    `You are an experienced Chinese ecommerce product listing operator for ${targetPlatform}.`,
+    `You are an experienced ${englishPlatformScope} product listing operator for ${targetPlatform}.`,
     "Analyze the uploaded product image and infer useful listing information. Return JSON only.",
     `Write all customer-facing values in ${outputLanguage}.`,
     "Do not invent facts that are not visually supported. If uncertain, use cautious wording.",
