@@ -42,3 +42,14 @@ export const SystemLogLevel = {
 } as const
 
 export type SystemLogLevel = (typeof SystemLogLevel)[keyof typeof SystemLogLevel]
+
+
+export const TaskStatus = {
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  SUCCEEDED: 'SUCCEEDED',
+  FAILED: 'FAILED',
+  CANCELED: 'CANCELED'
+} as const
+
+export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus]

@@ -253,6 +253,7 @@ export type UserWhereInput = {
   apiLogs?: Prisma.ApiLogListRelationFilter
   systemLogs?: Prisma.SystemLogListRelationFilter
   generations?: Prisma.GenerationListRelationFilter
+  tasks?: Prisma.GenerationTaskListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -270,6 +271,7 @@ export type UserOrderByWithRelationInput = {
   apiLogs?: Prisma.ApiLogOrderByRelationAggregateInput
   systemLogs?: Prisma.SystemLogOrderByRelationAggregateInput
   generations?: Prisma.GenerationOrderByRelationAggregateInput
+  tasks?: Prisma.GenerationTaskOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -290,6 +292,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   apiLogs?: Prisma.ApiLogListRelationFilter
   systemLogs?: Prisma.SystemLogListRelationFilter
   generations?: Prisma.GenerationListRelationFilter
+  tasks?: Prisma.GenerationTaskListRelationFilter
 }, "id" | "phone">
 
 export type UserOrderByWithAggregationInput = {
@@ -339,6 +342,7 @@ export type UserCreateInput = {
   apiLogs?: Prisma.ApiLogCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -356,6 +360,7 @@ export type UserUncheckedCreateInput = {
   apiLogs?: Prisma.ApiLogUncheckedCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -373,6 +378,7 @@ export type UserUpdateInput = {
   apiLogs?: Prisma.ApiLogUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -390,6 +396,7 @@ export type UserUncheckedUpdateInput = {
   apiLogs?: Prisma.ApiLogUncheckedUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -552,6 +559,20 @@ export type UserUpdateOneRequiredWithoutGenerationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutGenerationsInput, Prisma.UserUpdateWithoutGenerationsInput>, Prisma.UserUncheckedUpdateWithoutGenerationsInput>
 }
 
+export type UserCreateNestedOneWithoutTasksInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTasksInput, Prisma.UserUncheckedCreateWithoutTasksInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTasksInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTasksNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTasksInput, Prisma.UserUncheckedCreateWithoutTasksInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTasksInput
+  upsert?: Prisma.UserUpsertWithoutTasksInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTasksInput, Prisma.UserUpdateWithoutTasksInput>, Prisma.UserUncheckedUpdateWithoutTasksInput>
+}
+
 export type UserCreateNestedOneWithoutApiLogsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutApiLogsInput, Prisma.UserUncheckedCreateWithoutApiLogsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutApiLogsInput
@@ -598,6 +619,7 @@ export type UserCreateWithoutSessionsInput = {
   apiLogs?: Prisma.ApiLogCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -614,6 +636,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   apiLogs?: Prisma.ApiLogUncheckedCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -646,6 +669,7 @@ export type UserUpdateWithoutSessionsInput = {
   apiLogs?: Prisma.ApiLogUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -662,6 +686,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   apiLogs?: Prisma.ApiLogUncheckedUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCreditRecordsInput = {
@@ -678,6 +703,7 @@ export type UserCreateWithoutCreditRecordsInput = {
   apiLogs?: Prisma.ApiLogCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCreditRecordsInput = {
@@ -694,6 +720,7 @@ export type UserUncheckedCreateWithoutCreditRecordsInput = {
   apiLogs?: Prisma.ApiLogUncheckedCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCreditRecordsInput = {
@@ -726,6 +753,7 @@ export type UserUpdateWithoutCreditRecordsInput = {
   apiLogs?: Prisma.ApiLogUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCreditRecordsInput = {
@@ -742,6 +770,7 @@ export type UserUncheckedUpdateWithoutCreditRecordsInput = {
   apiLogs?: Prisma.ApiLogUncheckedUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutGenerationsInput = {
@@ -758,6 +787,7 @@ export type UserCreateWithoutGenerationsInput = {
   creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutUserInput
   apiLogs?: Prisma.ApiLogCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutGenerationsInput = {
@@ -774,6 +804,7 @@ export type UserUncheckedCreateWithoutGenerationsInput = {
   creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutUserInput
   apiLogs?: Prisma.ApiLogUncheckedCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogUncheckedCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutGenerationsInput = {
@@ -806,6 +837,7 @@ export type UserUpdateWithoutGenerationsInput = {
   creditRecords?: Prisma.CreditRecordUpdateManyWithoutUserNestedInput
   apiLogs?: Prisma.ApiLogUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGenerationsInput = {
@@ -822,6 +854,91 @@ export type UserUncheckedUpdateWithoutGenerationsInput = {
   creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutUserNestedInput
   apiLogs?: Prisma.ApiLogUncheckedUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUncheckedUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutTasksInput = {
+  id?: string
+  phone: string
+  passwordHash: string
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  credits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastLoginAt?: Date | string | null
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutUserInput
+  apiLogs?: Prisma.ApiLogCreateNestedManyWithoutUserInput
+  systemLogs?: Prisma.SystemLogCreateNestedManyWithoutUserInput
+  generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutTasksInput = {
+  id?: string
+  phone: string
+  passwordHash: string
+  role?: $Enums.UserRole
+  status?: $Enums.UserStatus
+  credits?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  lastLoginAt?: Date | string | null
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutUserInput
+  apiLogs?: Prisma.ApiLogUncheckedCreateNestedManyWithoutUserInput
+  systemLogs?: Prisma.SystemLogUncheckedCreateNestedManyWithoutUserInput
+  generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutTasksInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTasksInput, Prisma.UserUncheckedCreateWithoutTasksInput>
+}
+
+export type UserUpsertWithoutTasksInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTasksInput, Prisma.UserUncheckedUpdateWithoutTasksInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTasksInput, Prisma.UserUncheckedCreateWithoutTasksInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTasksInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTasksInput, Prisma.UserUncheckedUpdateWithoutTasksInput>
+}
+
+export type UserUpdateWithoutTasksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  creditRecords?: Prisma.CreditRecordUpdateManyWithoutUserNestedInput
+  apiLogs?: Prisma.ApiLogUpdateManyWithoutUserNestedInput
+  systemLogs?: Prisma.SystemLogUpdateManyWithoutUserNestedInput
+  generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTasksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  credits?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutUserNestedInput
+  apiLogs?: Prisma.ApiLogUncheckedUpdateManyWithoutUserNestedInput
+  systemLogs?: Prisma.SystemLogUncheckedUpdateManyWithoutUserNestedInput
+  generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutApiLogsInput = {
@@ -838,6 +955,7 @@ export type UserCreateWithoutApiLogsInput = {
   creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutApiLogsInput = {
@@ -854,6 +972,7 @@ export type UserUncheckedCreateWithoutApiLogsInput = {
   creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutUserInput
   systemLogs?: Prisma.SystemLogUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutApiLogsInput = {
@@ -886,6 +1005,7 @@ export type UserUpdateWithoutApiLogsInput = {
   creditRecords?: Prisma.CreditRecordUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutApiLogsInput = {
@@ -902,6 +1022,7 @@ export type UserUncheckedUpdateWithoutApiLogsInput = {
   creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutUserNestedInput
   systemLogs?: Prisma.SystemLogUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSystemLogsInput = {
@@ -918,6 +1039,7 @@ export type UserCreateWithoutSystemLogsInput = {
   creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutUserInput
   apiLogs?: Prisma.ApiLogCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSystemLogsInput = {
@@ -934,6 +1056,7 @@ export type UserUncheckedCreateWithoutSystemLogsInput = {
   creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutUserInput
   apiLogs?: Prisma.ApiLogUncheckedCreateNestedManyWithoutUserInput
   generations?: Prisma.GenerationUncheckedCreateNestedManyWithoutUserInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSystemLogsInput = {
@@ -966,6 +1089,7 @@ export type UserUpdateWithoutSystemLogsInput = {
   creditRecords?: Prisma.CreditRecordUpdateManyWithoutUserNestedInput
   apiLogs?: Prisma.ApiLogUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSystemLogsInput = {
@@ -982,6 +1106,7 @@ export type UserUncheckedUpdateWithoutSystemLogsInput = {
   creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutUserNestedInput
   apiLogs?: Prisma.ApiLogUncheckedUpdateManyWithoutUserNestedInput
   generations?: Prisma.GenerationUncheckedUpdateManyWithoutUserNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -995,6 +1120,7 @@ export type UserCountOutputType = {
   apiLogs: number
   systemLogs: number
   generations: number
+  tasks: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1003,6 +1129,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   apiLogs?: boolean | UserCountOutputTypeCountApiLogsArgs
   systemLogs?: boolean | UserCountOutputTypeCountSystemLogsArgs
   generations?: boolean | UserCountOutputTypeCountGenerationsArgs
+  tasks?: boolean | UserCountOutputTypeCountTasksArgs
 }
 
 /**
@@ -1050,6 +1177,13 @@ export type UserCountOutputTypeCountGenerationsArgs<ExtArgs extends runtime.Type
   where?: Prisma.GenerationWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTasksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GenerationTaskWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1066,6 +1200,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   apiLogs?: boolean | Prisma.User$apiLogsArgs<ExtArgs>
   systemLogs?: boolean | Prisma.User$systemLogsArgs<ExtArgs>
   generations?: boolean | Prisma.User$generationsArgs<ExtArgs>
+  tasks?: boolean | Prisma.User$tasksArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1112,6 +1247,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   apiLogs?: boolean | Prisma.User$apiLogsArgs<ExtArgs>
   systemLogs?: boolean | Prisma.User$systemLogsArgs<ExtArgs>
   generations?: boolean | Prisma.User$generationsArgs<ExtArgs>
+  tasks?: boolean | Prisma.User$tasksArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1125,6 +1261,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     apiLogs: Prisma.$ApiLogPayload<ExtArgs>[]
     systemLogs: Prisma.$SystemLogPayload<ExtArgs>[]
     generations: Prisma.$GenerationPayload<ExtArgs>[]
+    tasks: Prisma.$GenerationTaskPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1535,6 +1672,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   apiLogs<T extends Prisma.User$apiLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$apiLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApiLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   systemLogs<T extends Prisma.User$systemLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$systemLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SystemLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   generations<T extends Prisma.User$generationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$generationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GenerationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tasks<T extends Prisma.User$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GenerationTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2083,6 +2221,30 @@ export type User$generationsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.GenerationScalarFieldEnum | Prisma.GenerationScalarFieldEnum[]
+}
+
+/**
+ * User.tasks
+ */
+export type User$tasksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GenerationTask
+   */
+  select?: Prisma.GenerationTaskSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GenerationTask
+   */
+  omit?: Prisma.GenerationTaskOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GenerationTaskInclude<ExtArgs> | null
+  where?: Prisma.GenerationTaskWhereInput
+  orderBy?: Prisma.GenerationTaskOrderByWithRelationInput | Prisma.GenerationTaskOrderByWithRelationInput[]
+  cursor?: Prisma.GenerationTaskWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GenerationTaskScalarFieldEnum | Prisma.GenerationTaskScalarFieldEnum[]
 }
 
 /**

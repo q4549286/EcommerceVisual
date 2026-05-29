@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import { ChangeEvent, DragEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { apiFetch } from "@/lib/client-api";
 import { useToast } from "@/components/ui/Toast";
+import { Drawer } from "@/components/ui/Drawer";
 import { useUserSession } from "@/components/UserSession";
-import { buildImagePlans, imageTypeOptions } from "@/lib/plans";
-import type { GenerateResponse, GenerationMode, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput } from "@/lib/types";
+import { imageTypeOptions } from "@/lib/plans";
+import type { GenerationMode, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput, TaskSummary } from "@/lib/types";
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
@@ -41,11 +43,6 @@ function splitLines(value: string) {
   return value.split(/[\n,，]/).map((item) => item.trim()).filter(Boolean);
 }
 
-function newId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 function loadJSON<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -68,9 +65,9 @@ function FieldBlock({ label, children }: { label: string; children: ReactNode })
 export default function WorkspacePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { user, refresh, setUser } = useUserSession();
+  const tasksPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const taskStatusRef = useRef<Map<string, string>>(new Map());
+  const { user } = useUserSession();
   const { show } = useToast();
 
   const [productImage, setProductImage] = useState<File | null>(null);
@@ -94,14 +91,12 @@ export default function WorkspacePage() {
   const [selectedTypes, setSelectedTypes] = useState<ImageTypeKey[]>(initialTypes);
   const [plans, setPlans] = useState<ImagePlan[]>([]);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [steps, setSteps] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lightboxPlan, setLightboxPlan] = useState<ImagePlan | null>(null);
-  const [showProgressModal, setShowProgressModal] = useState(false);
-  const [queueCount, setQueueCount] = useState(0);
+  const [tasks, setTasks] = useState<TaskSummary[]>([]);
+  const [taskDrawerOpen, setTaskDrawerOpen] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -110,6 +105,31 @@ export default function WorkspacePage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setTasks([]);
+      setActiveTaskId(null);
+      return;
+    }
+
+    void loadTasks();
+    if (tasksPollRef.current) clearInterval(tasksPollRef.current);
+    tasksPollRef.current = setInterval(() => {
+      void loadTasks(true);
+    }, 4000);
+
+    return () => {
+      if (tasksPollRef.current) clearInterval(tasksPollRef.current);
+      tasksPollRef.current = null;
+    };
+  }, [user?.id, activeTaskId]);
+
+  useEffect(() => {
+    if (!activeTaskId && tasks[0]) {
+      setActiveTaskId(tasks[0].id);
+    }
+  }, [activeTaskId, tasks]);
 
   function openFileDialog() {
     fileInputRef.current?.click();
@@ -212,111 +232,12 @@ export default function WorkspacePage() {
     }
   }
 
-  function startProgress(nextSteps: string[]) {
-    setSteps(nextSteps);
-    setStepIndex(0);
-    setProgress(0);
-    const startedAt = Date.now();
-    const estimated = Math.max(20_000, nextSteps.length * 32_000);
-    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    progressTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startedAt;
-      const ratio = Math.min(elapsed / estimated, 0.95);
-      const next = Math.floor(ratio * 95);
-      setProgress(next);
-      setStepIndex(Math.min(Math.floor((next / 95) * nextSteps.length), nextSteps.length - 1));
-    }, 400);
-  }
-
-  function finishProgress() {
-    if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    progressTimerRef.current = null;
-    setProgress(100);
-    setStepIndex((current) => Math.max(current, steps.length - 1));
-  }
-
-  async function runGeneration(imageTypes: ImageTypeKey[], mode: "new" | "replace" = "new") {
-    const validationError = validate(imageTypes);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setError("");
-    setIsLoading(true);
-    setShowProgressModal(true);
-    if (mode === "new") setPlans([]);
-
-    const input = buildInput(imageTypes);
-    const draftPlans = buildImagePlans(input);
-    startProgress(["连接生图接口", ...draftPlans.map((p) => `生成 ${p.title}`)]);
-
-    const formData = new FormData();
-    if (generationMode === "image_to_image" && productImage) {
-      formData.append("productImage", productImage);
-      for (const referenceImage of referenceImages) {
-        formData.append("referenceImages", referenceImage);
-      }
-    }
-    formData.append("input", JSON.stringify(input));
-    abortRef.current = new AbortController();
-
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        body: formData,
-        signal: abortRef.current.signal
-      });
-      const data: GenerateResponse = await response.json();
-      if (!data.ok && (!data.plans || data.plans.length === 0)) throw new Error(data.error || "生成失败。");
-
-      if (typeof data.credits === "number" && user) setUser({ ...user, credits: data.credits });
-      else refresh();
-
-      const resultPlans = data.plans || draftPlans;
-      if (mode === "replace") {
-        setPlans((current) => {
-          const replacements = new Map(resultPlans.map((plan) => [plan.type, plan]));
-          const merged = current.map((plan) => replacements.get(plan.type) || plan);
-          for (const plan of resultPlans) if (!merged.some((item) => item.type === plan.type)) merged.push(plan);
-          return merged;
-        });
-      } else {
-        setPlans(resultPlans);
-      }
-
-      const successCount = resultPlans.filter((p) => p.imageUrl).length;
-      const failCount = resultPlans.length - successCount;
-      persistHistory({
-        id: data.generationId || newId(),
-        timestamp: Date.now(),
-        productName: mode === "replace" ? `${input.productName || "未命名"}（重新生成）` : input.productName,
-        language,
-        imageCount: resultPlans.length,
-        successCount,
-        failCount,
-        plans: resultPlans
-      });
-      finishProgress();
-      show(failCount === 0 ? `已完成 ${successCount} 张图片` : `完成 ${successCount} 张，失败 ${failCount} 张`, failCount === 0 ? "success" : "danger");
-    } catch (err) {
-      if ((err as Error).name === "AbortError") show("已取消生成", "info");
-      else {
-        const message = err instanceof Error ? err.message : "生成失败。";
-        setError(message);
-        show(message, "danger");
-      }
-    } finally {
-      setIsLoading(false);
-      setQueueCount((current) => Math.max(0, current - 1));
-      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
-    }
-  }
-
   function resetWorkspaceForNextImage() {
     setProductImage(null);
     setPreviewUrl("");
     setReferenceImages([]);
     setReferencePreviewUrls([]);
+    setPlans([]);
     setProductName("");
     setCategory("");
     setDescription("");
@@ -330,12 +251,72 @@ export default function WorkspacePage() {
     setError("");
   }
 
-  function sendCurrentJobToBackground() {
-    setQueueCount((current) => current + 1);
-    setIsLoading(false);
-    setShowProgressModal(false);
-    resetWorkspaceForNextImage();
-    show("已转入后台队列，可以继续上传下一张图片", "info");
+  async function loadTasks(showToast = false) {
+    if (!user) return;
+    try {
+      const data = await apiFetch<{ items: TaskSummary[] }>("/api/tasks?limit=20", { cache: "no-store" });
+      setTasks(data.items);
+      if (activeTaskId && !data.items.some((task) => task.id === activeTaskId)) {
+        setActiveTaskId(data.items[0]?.id || null);
+      }
+      if (showToast) {
+        const previous = taskStatusRef.current;
+        const next = new Map(data.items.map((task) => [task.id, task.status]));
+        for (const task of data.items) {
+          const last = previous.get(task.id);
+          if ((last === "PENDING" || last === "RUNNING") && task.status === "SUCCEEDED") {
+            show(`任务「${task.title}」已完成`, "success");
+          }
+          if ((last === "PENDING" || last === "RUNNING") && task.status === "FAILED") {
+            show(`任务「${task.title}」失败了`, "danger");
+          }
+        }
+        taskStatusRef.current = next;
+      } else {
+        taskStatusRef.current = new Map(data.items.map((task) => [task.id, task.status]));
+      }
+    } catch {
+    }
+  }
+
+  async function submitTask(imageTypes: ImageTypeKey[]) {
+    const validationError = validate(imageTypes);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError("");
+    setIsSubmitting(true);
+
+    const input = buildInput(imageTypes);
+    const formData = new FormData();
+    if (generationMode === "image_to_image" && productImage) {
+      formData.append("productImage", productImage);
+      for (const referenceImage of referenceImages) {
+        formData.append("referenceImages", referenceImage);
+      }
+    }
+    formData.append("input", JSON.stringify(input));
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        body: formData
+      });
+      const data: { ok: boolean; taskId?: string; error?: string } = await response.json();
+      if (!response.ok || !data.ok || !data.taskId) throw new Error(data.error || "创建任务失败。");
+      resetWorkspaceForNextImage();
+      setTaskDrawerOpen(true);
+      setActiveTaskId(data.taskId);
+      await loadTasks();
+      show("任务已加入后台队列", "success");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "创建任务失败。";
+      setError(message);
+      show(message, "danger");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function applyAnalysis(analysis: ProductAnalysis) {
@@ -387,6 +368,15 @@ export default function WorkspacePage() {
     }
   }
 
+  const activeTask = activeTaskId ? tasks.find((task) => task.id === activeTaskId) || null : null;
+  const runningCount = tasks.filter((task) => ["PENDING", "RUNNING"].includes(task.status)).length;
+
+  useEffect(() => {
+    if (activeTask?.plans?.length) {
+      setPlans(activeTask.plans);
+    }
+  }, [activeTaskId, activeTask?.plans]);
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-4 sm:px-6 md:pl-24 lg:pt-6">
       <section className="mx-auto flex max-w-4xl flex-wrap items-center gap-3">
@@ -395,7 +385,10 @@ export default function WorkspacePage() {
           <h1 className="text-2xl font-semibold tracking-tight text-white">电商专用</h1>
           <p className="mt-1 text-sm text-white/[0.45]">手机货架、详情页、外卖上架和商品素材工作台</p>
         </div>
-        {queueCount > 0 ? <div className="ml-auto inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-white/70">后台队列 {queueCount} 个任务运行中</div> : null}
+        <button type="button" onClick={() => setTaskDrawerOpen(true)} className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-white/80 hover:bg-white/15">
+          <span>任务队列</span>
+          <span>{runningCount}</span>
+        </button>
       </section>
 
       <section className="mx-auto mt-5 max-w-4xl rounded-[30px] border border-white/[0.12] bg-black/[0.52] p-3 shadow-2xl shadow-black/[0.45] backdrop-blur-xl">
@@ -471,12 +464,12 @@ export default function WorkspacePage() {
                     {languageOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
                   </select>
                   {referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
-                  <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
+                  <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isSubmitting || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
                     {isAnalyzing ? "填写中" : "自动填写下列信息"}
                   </button>
                 </>
               ) : null}
-              <button type="button" onClick={() => runGeneration(selectedTypes)} disabled={isLoading || isAnalyzing} className="ml-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-black shadow-lg transition hover:scale-105 disabled:opacity-50">
+              <button type="button" onClick={() => void submitTask(selectedTypes)} disabled={isAnalyzing || isSubmitting} className="ml-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-black shadow-lg transition hover:scale-105 disabled:opacity-50">
                 ↑
               </button>
             </div>
@@ -538,28 +531,7 @@ export default function WorkspacePage() {
               </div>
             </div>
           </>
-        ) : (
-          <div>
-            <div>
-              <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {imageTypeOptions.map((item) => {
-                  const active = selectedTypes.includes(item.key);
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => toggleType(item.key)}
-                      className={`rounded-2xl border px-3 py-3 text-left text-xs transition ${active ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.06] text-white/60 hover:bg-white/10"}`}
-                    >
-                      <span className="block font-medium">{item.shortTitle}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+        ) : null}
       </section>
 
       {plans.length > 0 ? (
@@ -584,7 +556,7 @@ export default function WorkspacePage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => copyText(plan.prompt)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/[0.65] hover:bg-white/10">复制提示词</button>
                     {plan.imageUrl ? <a href={plan.imageUrl} download={`${plan.type}.png`} className="rounded-full bg-white px-3 py-1.5 text-xs text-black">下载</a> : null}
-                    <button onClick={() => runGeneration([plan.type], "replace")} disabled={isLoading} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/[0.65] hover:bg-white/10">重做</button>
+                    <button onClick={() => void submitTask([plan.type])} disabled={isAnalyzing || isSubmitting} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/[0.65] hover:bg-white/10">重做</button>
                   </div>
                 </div>
               </article>
@@ -593,31 +565,59 @@ export default function WorkspacePage() {
         </section>
       ) : null}
 
-      {isLoading && showProgressModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur">
-          <div className="w-[430px] max-w-full rounded-[28px] border border-white/10 bg-[#101010] p-6 shadow-2xl">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-base font-semibold">正在生成图片</h3>
-              <span className="text-sm text-white/[0.45]">{progress}%</span>
-            </div>
-            <p className="mb-4 text-sm text-white/[0.45]">{steps[stepIndex] || "处理中..."}</p>
-            <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="absolute inset-y-0 left-0 rounded-full bg-white transition-all duration-300" style={{ width: `${progress}%` }} />
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button onClick={sendCurrentJobToBackground} className="rounded-full bg-white px-4 py-2 text-sm text-black">转入后台队列</button>
-              <button onClick={() => abortRef.current?.abort()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/[0.65]">取消</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {lightboxPlan?.imageUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6" onClick={() => setLightboxPlan(null)}>
           <button type="button" onClick={() => setLightboxPlan(null)} className="absolute right-5 top-5 z-10 rounded-full bg-white px-4 py-2 text-sm text-black">关闭</button>
           <img src={lightboxPlan.imageUrl} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />
         </div>
       ) : null}
+
+      <Drawer
+        open={taskDrawerOpen}
+        onClose={() => setTaskDrawerOpen(false)}
+        title="任务队列"
+        description="提交后会在这里持续刷新，刷新页面也能继续看状态。"
+        width={760}
+      >
+        <div className="space-y-3">
+          {tasks.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">还没有任务。</div>
+          ) : (
+            tasks.map((task) => {
+              const active = task.id === activeTaskId;
+              const taskPlansList = task.plans || [];
+              return (
+                <button
+                  key={task.id}
+                  type="button"
+                  onClick={() => setActiveTaskId(task.id)}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-slate-900">{task.title}</div>
+                      <div className="mt-1 text-xs text-slate-500">{task.status} · {task.progress}% · {task.message || "等待中"}</div>
+                    </div>
+                    <div className="rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-500">{task.totalSteps} 张</div>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-full rounded-full bg-slate-900" style={{ width: `${task.progress}%` }} />
+                  </div>
+                  {taskPlansList.length > 0 ? (
+                    <div className="mt-3 grid grid-cols-5 gap-2">
+                      {taskPlansList.slice(0, 5).map((plan) => (
+                        <div key={`${task.id}-${plan.type}`} className="aspect-square overflow-hidden rounded-xl bg-slate-100">
+                          {plan.imageUrl ? <img src={plan.imageUrl} alt={plan.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-2 text-[11px] text-slate-400">{plan.error || "未出图"}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </Drawer>
     </div>
   );
 }

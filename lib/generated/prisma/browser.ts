@@ -43,6 +43,11 @@ export type Generation = Prisma.GenerationModel
  */
 export type GenerationImage = Prisma.GenerationImageModel
 /**
+ * Model GenerationTask
+ * 
+ */
+export type GenerationTask = Prisma.GenerationTaskModel
+/**
  * Model ApiLog
  * 
  */

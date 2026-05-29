@@ -267,6 +267,7 @@ export type GenerationWhereInput = {
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   images?: Prisma.GenerationImageListRelationFilter
   creditRecords?: Prisma.CreditRecordListRelationFilter
+  tasks?: Prisma.GenerationTaskListRelationFilter
 }
 
 export type GenerationOrderByWithRelationInput = {
@@ -283,6 +284,7 @@ export type GenerationOrderByWithRelationInput = {
   user?: Prisma.UserOrderByWithRelationInput
   images?: Prisma.GenerationImageOrderByRelationAggregateInput
   creditRecords?: Prisma.CreditRecordOrderByRelationAggregateInput
+  tasks?: Prisma.GenerationTaskOrderByRelationAggregateInput
 }
 
 export type GenerationWhereUniqueInput = Prisma.AtLeast<{
@@ -302,6 +304,7 @@ export type GenerationWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   images?: Prisma.GenerationImageListRelationFilter
   creditRecords?: Prisma.CreditRecordListRelationFilter
+  tasks?: Prisma.GenerationTaskListRelationFilter
 }, "id">
 
 export type GenerationOrderByWithAggregationInput = {
@@ -351,6 +354,7 @@ export type GenerationCreateInput = {
   user: Prisma.UserCreateNestedOneWithoutGenerationsInput
   images?: Prisma.GenerationImageCreateNestedManyWithoutGenerationInput
   creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationUncheckedCreateInput = {
@@ -366,6 +370,7 @@ export type GenerationUncheckedCreateInput = {
   createdAt?: Date | string
   images?: Prisma.GenerationImageUncheckedCreateNestedManyWithoutGenerationInput
   creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationUpdateInput = {
@@ -381,6 +386,7 @@ export type GenerationUpdateInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutGenerationsNestedInput
   images?: Prisma.GenerationImageUpdateManyWithoutGenerationNestedInput
   creditRecords?: Prisma.CreditRecordUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationUncheckedUpdateInput = {
@@ -396,6 +402,7 @@ export type GenerationUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.GenerationImageUncheckedUpdateManyWithoutGenerationNestedInput
   creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationCreateManyInput = {
@@ -579,6 +586,22 @@ export type GenerationUpdateOneRequiredWithoutImagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.GenerationUpdateToOneWithWhereWithoutImagesInput, Prisma.GenerationUpdateWithoutImagesInput>, Prisma.GenerationUncheckedUpdateWithoutImagesInput>
 }
 
+export type GenerationCreateNestedOneWithoutTasksInput = {
+  create?: Prisma.XOR<Prisma.GenerationCreateWithoutTasksInput, Prisma.GenerationUncheckedCreateWithoutTasksInput>
+  connectOrCreate?: Prisma.GenerationCreateOrConnectWithoutTasksInput
+  connect?: Prisma.GenerationWhereUniqueInput
+}
+
+export type GenerationUpdateOneWithoutTasksNestedInput = {
+  create?: Prisma.XOR<Prisma.GenerationCreateWithoutTasksInput, Prisma.GenerationUncheckedCreateWithoutTasksInput>
+  connectOrCreate?: Prisma.GenerationCreateOrConnectWithoutTasksInput
+  upsert?: Prisma.GenerationUpsertWithoutTasksInput
+  disconnect?: Prisma.GenerationWhereInput | boolean
+  delete?: Prisma.GenerationWhereInput | boolean
+  connect?: Prisma.GenerationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.GenerationUpdateToOneWithWhereWithoutTasksInput, Prisma.GenerationUpdateWithoutTasksInput>, Prisma.GenerationUncheckedUpdateWithoutTasksInput>
+}
+
 export type GenerationCreateWithoutUserInput = {
   id?: string
   productName: string
@@ -591,6 +614,7 @@ export type GenerationCreateWithoutUserInput = {
   createdAt?: Date | string
   images?: Prisma.GenerationImageCreateNestedManyWithoutGenerationInput
   creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationUncheckedCreateWithoutUserInput = {
@@ -605,6 +629,7 @@ export type GenerationUncheckedCreateWithoutUserInput = {
   createdAt?: Date | string
   images?: Prisma.GenerationImageUncheckedCreateNestedManyWithoutGenerationInput
   creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationCreateOrConnectWithoutUserInput = {
@@ -661,6 +686,7 @@ export type GenerationCreateWithoutCreditRecordsInput = {
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutGenerationsInput
   images?: Prisma.GenerationImageCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationUncheckedCreateWithoutCreditRecordsInput = {
@@ -675,6 +701,7 @@ export type GenerationUncheckedCreateWithoutCreditRecordsInput = {
   input: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   images?: Prisma.GenerationImageUncheckedCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationCreateOrConnectWithoutCreditRecordsInput = {
@@ -705,6 +732,7 @@ export type GenerationUpdateWithoutCreditRecordsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutGenerationsNestedInput
   images?: Prisma.GenerationImageUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationUncheckedUpdateWithoutCreditRecordsInput = {
@@ -719,6 +747,7 @@ export type GenerationUncheckedUpdateWithoutCreditRecordsInput = {
   input?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.GenerationImageUncheckedUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationCreateWithoutImagesInput = {
@@ -733,6 +762,7 @@ export type GenerationCreateWithoutImagesInput = {
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutGenerationsInput
   creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationUncheckedCreateWithoutImagesInput = {
@@ -747,6 +777,7 @@ export type GenerationUncheckedCreateWithoutImagesInput = {
   input: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutGenerationInput
+  tasks?: Prisma.GenerationTaskUncheckedCreateNestedManyWithoutGenerationInput
 }
 
 export type GenerationCreateOrConnectWithoutImagesInput = {
@@ -777,6 +808,7 @@ export type GenerationUpdateWithoutImagesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutGenerationsNestedInput
   creditRecords?: Prisma.CreditRecordUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationUncheckedUpdateWithoutImagesInput = {
@@ -790,6 +822,83 @@ export type GenerationUncheckedUpdateWithoutImagesInput = {
   creditsCharged?: Prisma.IntFieldUpdateOperationsInput | number
   input?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutGenerationNestedInput
+}
+
+export type GenerationCreateWithoutTasksInput = {
+  id?: string
+  productName: string
+  language: string
+  imageCount: number
+  successCount?: number
+  failCount?: number
+  creditsCharged?: number
+  input: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutGenerationsInput
+  images?: Prisma.GenerationImageCreateNestedManyWithoutGenerationInput
+  creditRecords?: Prisma.CreditRecordCreateNestedManyWithoutGenerationInput
+}
+
+export type GenerationUncheckedCreateWithoutTasksInput = {
+  id?: string
+  userId: string
+  productName: string
+  language: string
+  imageCount: number
+  successCount?: number
+  failCount?: number
+  creditsCharged?: number
+  input: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  images?: Prisma.GenerationImageUncheckedCreateNestedManyWithoutGenerationInput
+  creditRecords?: Prisma.CreditRecordUncheckedCreateNestedManyWithoutGenerationInput
+}
+
+export type GenerationCreateOrConnectWithoutTasksInput = {
+  where: Prisma.GenerationWhereUniqueInput
+  create: Prisma.XOR<Prisma.GenerationCreateWithoutTasksInput, Prisma.GenerationUncheckedCreateWithoutTasksInput>
+}
+
+export type GenerationUpsertWithoutTasksInput = {
+  update: Prisma.XOR<Prisma.GenerationUpdateWithoutTasksInput, Prisma.GenerationUncheckedUpdateWithoutTasksInput>
+  create: Prisma.XOR<Prisma.GenerationCreateWithoutTasksInput, Prisma.GenerationUncheckedCreateWithoutTasksInput>
+  where?: Prisma.GenerationWhereInput
+}
+
+export type GenerationUpdateToOneWithWhereWithoutTasksInput = {
+  where?: Prisma.GenerationWhereInput
+  data: Prisma.XOR<Prisma.GenerationUpdateWithoutTasksInput, Prisma.GenerationUncheckedUpdateWithoutTasksInput>
+}
+
+export type GenerationUpdateWithoutTasksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productName?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  imageCount?: Prisma.IntFieldUpdateOperationsInput | number
+  successCount?: Prisma.IntFieldUpdateOperationsInput | number
+  failCount?: Prisma.IntFieldUpdateOperationsInput | number
+  creditsCharged?: Prisma.IntFieldUpdateOperationsInput | number
+  input?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutGenerationsNestedInput
+  images?: Prisma.GenerationImageUpdateManyWithoutGenerationNestedInput
+  creditRecords?: Prisma.CreditRecordUpdateManyWithoutGenerationNestedInput
+}
+
+export type GenerationUncheckedUpdateWithoutTasksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  productName?: Prisma.StringFieldUpdateOperationsInput | string
+  language?: Prisma.StringFieldUpdateOperationsInput | string
+  imageCount?: Prisma.IntFieldUpdateOperationsInput | number
+  successCount?: Prisma.IntFieldUpdateOperationsInput | number
+  failCount?: Prisma.IntFieldUpdateOperationsInput | number
+  creditsCharged?: Prisma.IntFieldUpdateOperationsInput | number
+  input?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  images?: Prisma.GenerationImageUncheckedUpdateManyWithoutGenerationNestedInput
   creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutGenerationNestedInput
 }
 
@@ -817,6 +926,7 @@ export type GenerationUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.GenerationImageUpdateManyWithoutGenerationNestedInput
   creditRecords?: Prisma.CreditRecordUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationUncheckedUpdateWithoutUserInput = {
@@ -831,6 +941,7 @@ export type GenerationUncheckedUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   images?: Prisma.GenerationImageUncheckedUpdateManyWithoutGenerationNestedInput
   creditRecords?: Prisma.CreditRecordUncheckedUpdateManyWithoutGenerationNestedInput
+  tasks?: Prisma.GenerationTaskUncheckedUpdateManyWithoutGenerationNestedInput
 }
 
 export type GenerationUncheckedUpdateManyWithoutUserInput = {
@@ -853,11 +964,13 @@ export type GenerationUncheckedUpdateManyWithoutUserInput = {
 export type GenerationCountOutputType = {
   images: number
   creditRecords: number
+  tasks: number
 }
 
 export type GenerationCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   images?: boolean | GenerationCountOutputTypeCountImagesArgs
   creditRecords?: boolean | GenerationCountOutputTypeCountCreditRecordsArgs
+  tasks?: boolean | GenerationCountOutputTypeCountTasksArgs
 }
 
 /**
@@ -884,6 +997,13 @@ export type GenerationCountOutputTypeCountCreditRecordsArgs<ExtArgs extends runt
   where?: Prisma.CreditRecordWhereInput
 }
 
+/**
+ * GenerationCountOutputType without action
+ */
+export type GenerationCountOutputTypeCountTasksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.GenerationTaskWhereInput
+}
+
 
 export type GenerationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -899,6 +1019,7 @@ export type GenerationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   images?: boolean | Prisma.Generation$imagesArgs<ExtArgs>
   creditRecords?: boolean | Prisma.Generation$creditRecordsArgs<ExtArgs>
+  tasks?: boolean | Prisma.Generation$tasksArgs<ExtArgs>
   _count?: boolean | Prisma.GenerationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["generation"]>
 
@@ -948,6 +1069,7 @@ export type GenerationInclude<ExtArgs extends runtime.Types.Extensions.InternalA
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   images?: boolean | Prisma.Generation$imagesArgs<ExtArgs>
   creditRecords?: boolean | Prisma.Generation$creditRecordsArgs<ExtArgs>
+  tasks?: boolean | Prisma.Generation$tasksArgs<ExtArgs>
   _count?: boolean | Prisma.GenerationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type GenerationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -963,6 +1085,7 @@ export type $GenerationPayload<ExtArgs extends runtime.Types.Extensions.Internal
     user: Prisma.$UserPayload<ExtArgs>
     images: Prisma.$GenerationImagePayload<ExtArgs>[]
     creditRecords: Prisma.$CreditRecordPayload<ExtArgs>[]
+    tasks: Prisma.$GenerationTaskPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1372,6 +1495,7 @@ export interface Prisma__GenerationClient<T, Null = never, ExtArgs extends runti
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   images<T extends Prisma.Generation$imagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Generation$imagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GenerationImagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   creditRecords<T extends Prisma.Generation$creditRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Generation$creditRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CreditRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tasks<T extends Prisma.Generation$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Generation$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GenerationTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1857,6 +1981,30 @@ export type Generation$creditRecordsArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.CreditRecordScalarFieldEnum | Prisma.CreditRecordScalarFieldEnum[]
+}
+
+/**
+ * Generation.tasks
+ */
+export type Generation$tasksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GenerationTask
+   */
+  select?: Prisma.GenerationTaskSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GenerationTask
+   */
+  omit?: Prisma.GenerationTaskOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GenerationTaskInclude<ExtArgs> | null
+  where?: Prisma.GenerationTaskWhereInput
+  orderBy?: Prisma.GenerationTaskOrderByWithRelationInput | Prisma.GenerationTaskOrderByWithRelationInput[]
+  cursor?: Prisma.GenerationTaskWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.GenerationTaskScalarFieldEnum | Prisma.GenerationTaskScalarFieldEnum[]
 }
 
 /**

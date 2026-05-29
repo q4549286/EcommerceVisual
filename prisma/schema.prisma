@@ -30,6 +30,14 @@ enum SystemLogLevel {
   ERROR
 }
 
+enum TaskStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
 model User {
   id            String         @id @default(cuid())
   phone         String         @unique
@@ -45,6 +53,7 @@ model User {
   apiLogs       ApiLog[]
   systemLogs    SystemLog[]
   generations   Generation[]
+  tasks         GenerationTask[]
 }
 
 model Session {
@@ -92,6 +101,7 @@ model Generation {
   createdAt      DateTime          @default(now())
   images         GenerationImage[]
   creditRecords  CreditRecord[]
+  tasks          GenerationTask[]
 
   @@index([userId, createdAt])
 }
@@ -109,6 +119,30 @@ model GenerationImage {
   createdAt    DateTime   @default(now())
 
   @@index([generationId])
+}
+
+model GenerationTask {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind         String       @default("generation")
+  title        String
+  status       TaskStatus   @default(PENDING)
+  progress     Int          @default(0)
+  totalSteps   Int          @default(0)
+  message      String?
+  input        Json
+  assets       Json?
+  generationId String?
+  generation   Generation?  @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  error        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  startedAt    DateTime?
+  finishedAt   DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 model ApiLog {

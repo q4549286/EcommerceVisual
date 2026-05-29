@@ -389,6 +389,7 @@ export const ModelName = {
   CreditRecord: 'CreditRecord',
   Generation: 'Generation',
   GenerationImage: 'GenerationImage',
+  GenerationTask: 'GenerationTask',
   ApiLog: 'ApiLog',
   SystemLog: 'SystemLog'
 } as const
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "creditRecord" | "generation" | "generationImage" | "apiLog" | "systemLog"
+    modelProps: "user" | "session" | "creditRecord" | "generation" | "generationImage" | "generationTask" | "apiLog" | "systemLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -780,6 +781,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    GenerationTask: {
+      payload: Prisma.$GenerationTaskPayload<ExtArgs>
+      fields: Prisma.GenerationTaskFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GenerationTaskFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GenerationTaskFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>
+        }
+        findFirst: {
+          args: Prisma.GenerationTaskFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GenerationTaskFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>
+        }
+        findMany: {
+          args: Prisma.GenerationTaskFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>[]
+        }
+        create: {
+          args: Prisma.GenerationTaskCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>
+        }
+        createMany: {
+          args: Prisma.GenerationTaskCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GenerationTaskCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>[]
+        }
+        delete: {
+          args: Prisma.GenerationTaskDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>
+        }
+        update: {
+          args: Prisma.GenerationTaskUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>
+        }
+        deleteMany: {
+          args: Prisma.GenerationTaskDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GenerationTaskUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GenerationTaskUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>[]
+        }
+        upsert: {
+          args: Prisma.GenerationTaskUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GenerationTaskPayload>
+        }
+        aggregate: {
+          args: Prisma.GenerationTaskAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGenerationTask>
+        }
+        groupBy: {
+          args: Prisma.GenerationTaskGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GenerationTaskGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GenerationTaskCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GenerationTaskCountAggregateOutputType> | number
+        }
+      }
+    }
     ApiLog: {
       payload: Prisma.$ApiLogPayload<ExtArgs>
       fields: Prisma.ApiLogFieldRefs
@@ -1041,6 +1116,28 @@ export const GenerationImageScalarFieldEnum = {
 export type GenerationImageScalarFieldEnum = (typeof GenerationImageScalarFieldEnum)[keyof typeof GenerationImageScalarFieldEnum]
 
 
+export const GenerationTaskScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  kind: 'kind',
+  title: 'title',
+  status: 'status',
+  progress: 'progress',
+  totalSteps: 'totalSteps',
+  message: 'message',
+  input: 'input',
+  assets: 'assets',
+  generationId: 'generationId',
+  error: 'error',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type GenerationTaskScalarFieldEnum = (typeof GenerationTaskScalarFieldEnum)[keyof typeof GenerationTaskScalarFieldEnum]
+
+
 export const ApiLogScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -1234,6 +1331,20 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'TaskStatus'
+ */
+export type EnumTaskStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TaskStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'TaskStatus[]'
+ */
+export type ListEnumTaskStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TaskStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'SystemLogLevel'
  */
 export type EnumSystemLogLevelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SystemLogLevel'>
@@ -1375,6 +1486,7 @@ export type GlobalOmitConfig = {
   creditRecord?: Prisma.CreditRecordOmit
   generation?: Prisma.GenerationOmit
   generationImage?: Prisma.GenerationImageOmit
+  generationTask?: Prisma.GenerationTaskOmit
   apiLog?: Prisma.ApiLogOmit
   systemLog?: Prisma.SystemLogOmit
 }

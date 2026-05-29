@@ -14,6 +14,8 @@ export type ListingIntent = "new_listing" | "refresh_listing" | "delist_clearanc
 
 export type GenerationMode = "image_to_image" | "text_to_image";
 
+export type TaskStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
+
 export type ImageTypeKey =
   | "main_white_bg"
   | "platform_listing"
@@ -119,4 +121,20 @@ export type GenerateResponse = {
   error?: string;
   logs: CallLog[];
   credits?: number;
+};
+
+export type TaskSummary = {
+  id: string;
+  kind: string;
+  title: string;
+  status: TaskStatus;
+  progress: number;
+  totalSteps: number;
+  message?: string | null;
+  error?: string | null;
+  createdAt: string;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  generationId?: string | null;
+  plans?: ImagePlan[];
 };

@@ -56,6 +56,7 @@ export const ModelName = {
   CreditRecord: 'CreditRecord',
   Generation: 'Generation',
   GenerationImage: 'GenerationImage',
+  GenerationTask: 'GenerationTask',
   ApiLog: 'ApiLog',
   SystemLog: 'SystemLog'
 } as const
@@ -148,6 +149,28 @@ export const GenerationImageScalarFieldEnum = {
 } as const
 
 export type GenerationImageScalarFieldEnum = (typeof GenerationImageScalarFieldEnum)[keyof typeof GenerationImageScalarFieldEnum]
+
+
+export const GenerationTaskScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  kind: 'kind',
+  title: 'title',
+  status: 'status',
+  progress: 'progress',
+  totalSteps: 'totalSteps',
+  message: 'message',
+  input: 'input',
+  assets: 'assets',
+  generationId: 'generationId',
+  error: 'error',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+} as const
+
+export type GenerationTaskScalarFieldEnum = (typeof GenerationTaskScalarFieldEnum)[keyof typeof GenerationTaskScalarFieldEnum]
 
 
 export const ApiLogScalarFieldEnum = {
