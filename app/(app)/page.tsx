@@ -11,6 +11,7 @@ import type { GenerationMode, HistoryEntry, ImagePlan, ImageTypeKey, Language, L
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
+const OUTPUT_TYPES_KEY = "ecv:output-types";
 
 const languageOptions: { value: Language; label: string }[] = [
   { value: "zh-CN", label: "简体中文" },
@@ -37,6 +38,7 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
+const validTypeKeys = new Set(imageTypeOptions.map((item) => item.key));
 const controlClass = "w-full rounded-xl border border-white/10 bg-white/[0.07] text-sm text-white outline-none placeholder:text-white/[0.26] focus:border-white/30 focus:bg-white/10";
 const inputClass = `${controlClass} h-11 px-3.5`;
 const selectClass = `${controlClass} h-11 px-3.5`;
@@ -90,7 +92,11 @@ export default function WorkspacePage() {
   const [audience, setAudience] = useState("");
   const [sellingPoints, setSellingPoints] = useState("");
   const [avoid, setAvoid] = useState("");
-  const [selectedTypes, setSelectedTypes] = useState<ImageTypeKey[]>(initialTypes);
+  const [selectedTypes, setSelectedTypes] = useState<ImageTypeKey[]>(() => {
+    const saved = loadJSON<ImageTypeKey[]>(OUTPUT_TYPES_KEY, initialTypes);
+    const validSaved = saved.filter((item) => validTypeKeys.has(item));
+    return validSaved.length > 0 ? validSaved : initialTypes;
+  });
   const [plans, setPlans] = useState<ImagePlan[]>([]);
   const [error, setError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -126,6 +132,13 @@ export default function WorkspacePage() {
       tasksPollRef.current = null;
     };
   }, [user?.id, activeTaskId]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(OUTPUT_TYPES_KEY, JSON.stringify(selectedTypes));
+    } catch {
+    }
+  }, [selectedTypes]);
 
   useEffect(() => {
     if (!activeTaskId && tasks[0]) {
