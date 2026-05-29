@@ -18,16 +18,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#070707] text-white">
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[520px] bg-[url('/jiaotu/home-light1.png')] bg-cover bg-top opacity-80" />
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_50%_4%,rgba(255,145,49,0.16),transparent_28%),linear-gradient(180deg,rgba(7,7,7,0.05),#070707_62%)]" />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[520px] bg-[radial-gradient(ellipse_at_52%_0%,rgba(255,147,61,0.35),transparent_34%),radial-gradient(ellipse_at_26%_10%,rgba(43,190,255,0.14),transparent_24%)]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(180deg,rgba(7,7,7,0.08),#070707_62%)]" />
 
       <header className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-4">
           <button className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-lg text-white/80 backdrop-blur md:hidden" aria-label="菜单">
             ≡
           </button>
-          <Link href="/" className="inline-flex items-center">
-            <Image src="/jiaotu/logo.svg" alt="椒图AI" width={116} height={38} className="h-8 w-auto" priority />
+          <Link href="/" className="inline-flex items-center gap-2">
+            <Image src="/brand/ecommerce-mascot.png" alt="" width={32} height={32} className="h-8 w-8 rounded-xl object-cover shadow-lg shadow-[#ff7a2f]/20" priority />
+            <span className="text-xl font-black tracking-tight text-white">电商专用</span>
           </Link>
         </div>
 

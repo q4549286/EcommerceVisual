@@ -79,7 +79,7 @@ function toAuthUser(user: {
 }): AuthUser {
   return {
     id: user.id,
-    phone: user.phone === API_WORKSPACE_PHONE ? "API 管理模式" : user.phone,
+    phone: user.phone === API_WORKSPACE_PHONE ? "API 工作区" : user.phone,
     role: user.role as AuthUser["role"],
     status: user.status as AuthUser["status"],
     credits: user.credits,
@@ -314,7 +314,7 @@ export async function loginWithApiSettings(input: { baseUrl: string; apiKey: str
   await writeSystemLog({
     userId: user.id,
     action: "auth.api_manager_login",
-    message: "通过 API 管理进入工作区",
+    message: "通过 API 配置进入工作区",
     metadata: {
       baseUrl,
       model,

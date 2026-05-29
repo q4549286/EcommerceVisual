@@ -35,12 +35,56 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
 ];
 
 const inspirationCards = [
-  { title: "产品摄影图", src: "/jiaotu/inspire-1.jpg", tall: true },
-  { title: "电商详情图", src: "/jiaotu/inspire-2.png", tall: true },
-  { title: "虚拟试衣", src: "/jiaotu/inspire-3.jpg", tall: false },
-  { title: "商品海报图制作", src: "/jiaotu/inspire-4.jpg", tall: true },
-  { title: "手机货架主图", src: "/jiaotu/inspire-1.jpg", tall: false },
-  { title: "详情首屏卖点", src: "/jiaotu/inspire-2.png", tall: false }
+  { title: "产品摄影图", tone: "from-[#f8f0df] via-[#d8f3ff] to-[#ffffff]", copy: "主图精修", tall: true },
+  { title: "电商详情图", tone: "from-[#ece4d8] via-[#f4f0e8] to-[#b9936b]", copy: "卖点 / 规格 / 场景", tall: true },
+  { title: "虚拟试衣", tone: "from-[#ffd6e8] via-[#fff1f6] to-[#ffd8b8]", copy: "服装替换", tall: false },
+  { title: "商品海报图制作", tone: "from-[#e63946] via-[#ffcf33] to-[#69d2ff]", copy: "促销海报", tall: true },
+  { title: "手机货架主图", tone: "from-[#f7f7f7] via-[#e3f2ff] to-[#cde6ff]", copy: "小图可识别", tall: false },
+  { title: "详情首屏卖点", tone: "from-[#1d1d1d] via-[#444] to-[#f6f6f6]", copy: "手机端首屏", tall: false }
+];
+
+const quickFeaturePresets: {
+  title: string;
+  hint: string;
+  imageTypes: ImageTypeKey[];
+  description: string;
+}[] = [
+  {
+    title: "产品摄影图",
+    hint: "白底主图 / 货架图",
+    imageTypes: ["main_white_bg", "platform_listing"],
+    description: "保留产品真实外观，生成电商产品摄影图，商品主体放大，背景干净，适合手机端货架小图。"
+  },
+  {
+    title: "电商详情图",
+    hint: "卖点 / 规格 / 场景",
+    imageTypes: ["feature_infographic", "detail_specs", "lifestyle"],
+    description: "根据产品图生成手机端电商详情图，包含首屏卖点、规格说明和使用场景，少字大图，适合手机阅读。"
+  },
+  {
+    title: "虚拟试衣",
+    hint: "参考图驱动",
+    imageTypes: ["lifestyle"],
+    description: "使用产品图和参考图生成虚拟试穿/试用场景，保留商品款式与质感，参考图只作为人物姿态、场景或风格参考。"
+  },
+  {
+    title: "商品海报图制作",
+    hint: "活动图 / 宣传图",
+    imageTypes: ["platform_listing", "feature_infographic"],
+    description: "生成手机端商品宣传海报，突出产品主体和核心卖点，不伪造价格、折扣、平台标识或夸张承诺。"
+  },
+  {
+    title: "产品精修白底图",
+    hint: "审核友好",
+    imageTypes: ["main_white_bg"],
+    description: "精修产品白底图，保留真实 SKU，纯白背景，边缘清晰，无文字、无贴纸、无多余道具。"
+  },
+  {
+    title: "手持商品图",
+    hint: "种草场景",
+    imageTypes: ["lifestyle"],
+    description: "生成真实手持商品图或生活方式种草图，商品清晰占主导，画面适合手机端内容流。"
+  }
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
@@ -76,6 +120,7 @@ function FieldBlock({ label, children }: { label: string; children: ReactNode })
 
 export default function WorkspacePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const referenceInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { user, refresh, setUser } = useUserSession();
@@ -83,6 +128,8 @@ export default function WorkspacePage() {
 
   const [productImage, setProductImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [referenceImages, setReferenceImages] = useState<File[]>([]);
+  const [referencePreviewUrls, setReferencePreviewUrls] = useState<string[]>([]);
   const [productName, setProductName] = useState("");
   const [platform, setPlatform] = useState<PlatformKey>("meituan_waimai");
   const [listingIntent, setListingIntent] = useState<ListingIntent>("new_listing");
@@ -105,6 +152,8 @@ export default function WorkspacePage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [steps, setSteps] = useState<string[]>([]);
   const [lightboxPlan, setLightboxPlan] = useState<ImagePlan | null>(null);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [queueCount, setQueueCount] = useState(0);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -118,6 +167,10 @@ export default function WorkspacePage() {
     fileInputRef.current?.click();
   }
 
+  function openReferenceDialog() {
+    referenceInputRef.current?.click();
+  }
+
   function handleFile(file?: File | null) {
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -129,8 +182,22 @@ export default function WorkspacePage() {
     setError("");
   }
 
+  function handleReferenceFiles(files?: FileList | File[] | null) {
+    const incoming = Array.from(files || []).filter((file) => ["image/jpeg", "image/png", "image/webp"].includes(file.type));
+    if (incoming.length === 0) return;
+    const next = [...referenceImages, ...incoming].slice(0, 6);
+    setReferenceImages(next);
+    setReferencePreviewUrls(next.map((file) => URL.createObjectURL(file)));
+    setError("");
+  }
+
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     handleFile(event.target.files?.[0] ?? null);
+    event.target.value = "";
+  }
+
+  function onReferenceChange(event: ChangeEvent<HTMLInputElement>) {
+    handleReferenceFiles(event.target.files);
     event.target.value = "";
   }
 
@@ -139,8 +206,20 @@ export default function WorkspacePage() {
     handleFile(event.dataTransfer.files?.[0] ?? null);
   }
 
+  function onReferenceDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault();
+    handleReferenceFiles(event.dataTransfer.files);
+  }
+
   function toggleType(type: ImageTypeKey) {
     setSelectedTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]);
+  }
+
+  function applyQuickFeature(preset: typeof quickFeaturePresets[number]) {
+    setSelectedTypes(preset.imageTypes);
+    setDescription(preset.description);
+    setError("");
+    show(`已切换到「${preset.title}」`, "info");
   }
 
   function buildInput(imageTypes = selectedTypes): ProductInput {
@@ -215,6 +294,7 @@ export default function WorkspacePage() {
     }
     setError("");
     setIsLoading(true);
+    setShowProgressModal(true);
     if (mode === "new") setPlans([]);
 
     const input = buildInput(imageTypes);
@@ -223,6 +303,9 @@ export default function WorkspacePage() {
 
     const formData = new FormData();
     formData.append("productImage", productImage as File);
+    for (const referenceImage of referenceImages) {
+      formData.append("referenceImages", referenceImage);
+    }
     formData.append("input", JSON.stringify(input));
     abortRef.current = new AbortController();
 
@@ -273,8 +356,35 @@ export default function WorkspacePage() {
       }
     } finally {
       setIsLoading(false);
+      setQueueCount((current) => Math.max(0, current - 1));
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     }
+  }
+
+  function resetWorkspaceForNextImage() {
+    setProductImage(null);
+    setPreviewUrl("");
+    setReferenceImages([]);
+    setReferencePreviewUrls([]);
+    setProductName("");
+    setCategory("");
+    setDescription("");
+    setBrand("");
+    setMaterial("");
+    setSize("");
+    setColor("");
+    setAudience("");
+    setSellingPoints("");
+    setAvoid("");
+    setError("");
+  }
+
+  function sendCurrentJobToBackground() {
+    setQueueCount((current) => current + 1);
+    setIsLoading(false);
+    setShowProgressModal(false);
+    resetWorkspaceForNextImage();
+    show("已转入后台队列，可以继续上传下一张图片", "info");
   }
 
   function applyAnalysis(analysis: ProductAnalysis) {
@@ -329,9 +439,10 @@ export default function WorkspacePage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-8 sm:px-6 md:pl-24 lg:pt-10">
       <section className="mx-auto max-w-3xl text-center">
-        <Image src="/jiaotu/mascot.webp" alt="" width={120} height={100} className="mx-auto mb-4 h-24 w-auto" priority />
-        <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">修图，就用椒图 AI</h1>
-        <p className="mt-5 text-base text-white/[0.45] sm:text-lg">让每个人都能轻松创作出专业级图片和视频</p>
+        <Image src="/brand/ecommerce-mascot.png" alt="" width={120} height={120} className="mx-auto mb-4 h-24 w-24 rounded-[28px] object-cover" priority />
+        <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">电商专用</h1>
+        <p className="mt-5 text-base text-white/[0.45] sm:text-lg">面向手机货架、详情页、外卖上架和商品素材的 AI 作图工作台</p>
+        {queueCount > 0 ? <div className="mx-auto mt-4 inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-white/70">后台队列 {queueCount} 个任务运行中</div> : null}
       </section>
 
       <section className="mx-auto mt-12 max-w-4xl rounded-[30px] border border-white/[0.12] bg-black/[0.52] p-3 shadow-2xl shadow-black/[0.45] backdrop-blur-xl">
@@ -344,20 +455,51 @@ export default function WorkspacePage() {
           ))}
         </div>
 
+        <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3">
+          {quickFeaturePresets.map((preset) => (
+            <button
+              key={preset.title}
+              type="button"
+              onClick={() => applyQuickFeature(preset)}
+              className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-3 text-left transition hover:border-white/20 hover:bg-white/10"
+            >
+              <span className="block text-sm font-semibold text-white">{preset.title}</span>
+              <span className="mt-1 block text-xs text-white/[0.45]">{preset.hint}</span>
+            </button>
+          ))}
+        </div>
+
         <div
           onDragOver={(event) => event.preventDefault()}
           onDrop={onDrop}
-          className="grid min-h-[210px] grid-cols-[88px_minmax(0,1fr)] gap-4 rounded-[24px] border border-white/[0.08] bg-[#080808]/90 p-4"
+          className="grid min-h-[230px] grid-cols-1 gap-4 rounded-[24px] border border-white/[0.08] bg-[#080808]/90 p-4 sm:grid-cols-[260px_minmax(0,1fr)]"
         >
-          <button
-            type="button"
-            onClick={openFileDialog}
-            className="flex h-24 w-20 rotate-[-10deg] items-center justify-center rounded-2xl border border-dashed border-white/35 bg-white/[0.08] text-4xl font-light text-white/90 transition hover:bg-white/[0.12]"
-            aria-label="上传商品图"
-          >
-            {previewUrl ? <img src={previewUrl} alt="商品图" className="h-full w-full rounded-2xl object-cover" /> : "+"}
-          </button>
-          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
+          <div className="grid grid-cols-2 gap-4 border-white/10 sm:border-r sm:pr-4">
+            <button
+              type="button"
+              onClick={openFileDialog}
+              className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+              aria-label="上传产品图"
+            >
+              {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-40 w-full rounded-3xl object-cover" /> : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">产品图</span></>}
+            </button>
+            <button
+              type="button"
+              onClick={openReferenceDialog}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={onReferenceDrop}
+              className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+              aria-label="上传参考图"
+            >
+              {referencePreviewUrls.length > 0 ? (
+                <div className="grid h-full max-h-40 w-full grid-cols-2 gap-1 p-2">
+                  {referencePreviewUrls.slice(0, 4).map((url, index) => <img key={`${url}-${index}`} src={url} alt={`参考图 ${index + 1}`} className="h-full min-h-14 rounded-xl object-cover" />)}
+                </div>
+              ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">参考图</span></>}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
+            <input ref={referenceInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onReferenceChange} className="hidden" />
+          </div>
 
           <div className="flex min-w-0 flex-col gap-3">
             <textarea
@@ -373,6 +515,7 @@ export default function WorkspacePage() {
               <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
                 {languageOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
               </select>
+              {referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
               <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
                 {isAnalyzing ? "识别中" : "自动识别"}
               </button>
@@ -472,7 +615,15 @@ export default function WorkspacePage() {
         <div className="columns-2 gap-4 md:columns-3">
           {inspirationCards.map((item, index) => (
             <article key={`${item.title}-${index}`} className="mb-4 break-inside-avoid overflow-hidden rounded-[18px] bg-white/[0.08]">
-              <img src={item.src} alt={item.title} className={`w-full object-cover ${item.tall ? "aspect-[3/4]" : "aspect-square"}`} />
+              <div className={`relative flex w-full items-end overflow-hidden bg-gradient-to-br ${item.tone} p-4 text-black ${item.tall ? "aspect-[3/4]" : "aspect-square"}`}>
+                <div className="absolute left-5 top-5 h-16 w-16 rounded-3xl bg-white/45 backdrop-blur" />
+                <div className="absolute right-4 top-8 h-24 w-24 rounded-full bg-black/10" />
+                <div className="absolute bottom-14 right-4 h-28 w-20 rounded-[28px] bg-white/55 shadow-xl" />
+                <div className="relative">
+                  <div className="text-3xl font-black tracking-tight">{item.copy}</div>
+                  <div className="mt-2 text-xs font-medium opacity-60">AI ecommerce visual</div>
+                </div>
+              </div>
               <div className="px-3 py-3 text-sm font-medium">{item.title}</div>
             </article>
           ))}
@@ -482,7 +633,7 @@ export default function WorkspacePage() {
         </div>
       </section>
 
-      {isLoading ? (
+      {isLoading && showProgressModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur">
           <div className="w-[430px] max-w-full rounded-[28px] border border-white/10 bg-[#101010] p-6 shadow-2xl">
             <div className="mb-2 flex items-center justify-between">
@@ -493,14 +644,18 @@ export default function WorkspacePage() {
             <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
               <div className="absolute inset-y-0 left-0 rounded-full bg-white transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
-            <button onClick={() => abortRef.current?.abort()} className="mt-5 text-sm text-white/[0.45] underline underline-offset-4">取消</button>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={sendCurrentJobToBackground} className="rounded-full bg-white px-4 py-2 text-sm text-black">转入后台队列</button>
+              <button onClick={() => abortRef.current?.abort()} className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/[0.65]">取消</button>
+            </div>
           </div>
         </div>
       ) : null}
 
       {lightboxPlan?.imageUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6" onClick={() => setLightboxPlan(null)}>
-          <img src={lightboxPlan.imageUrl} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-2xl object-contain" />
+          <button type="button" onClick={() => setLightboxPlan(null)} className="absolute right-5 top-5 z-10 rounded-full bg-white px-4 py-2 text-sm text-black">关闭</button>
+          <img src={lightboxPlan.imageUrl} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />
         </div>
       ) : null}
     </div>

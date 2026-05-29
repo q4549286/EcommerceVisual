@@ -7,8 +7,8 @@ import { getUserByToken } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "椒图AI 工作台",
-  description: "中文 AI 修图、电商套图与商品图生成工作台。"
+  title: "电商专用",
+  description: "面向手机电商、外卖上架、商品详情页和货架图的 AI 作图工作台。"
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

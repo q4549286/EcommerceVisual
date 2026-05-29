@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     userId = user.id;
     const formData = await request.formData();
     const image = formData.get("productImage");
+    const referenceImages = formData.getAll("referenceImages").filter((item): item is File => item instanceof File && item.size > 0).slice(0, 6);
     const rawInput = formData.get("input");
 
     if (!(image instanceof File)) {
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
     reservedCount = plans.length;
 
     for (const plan of plans) {
-      const result = await generateEditedImage(plan, image);
+      const result = await generateEditedImage(plan, image, referenceImages);
       logs.push(result.log);
       await writeApiLog(user.id, "image.generate", result.log);
       if (result.ok) {

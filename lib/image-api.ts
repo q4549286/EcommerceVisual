@@ -105,7 +105,7 @@ async function requestWithRetry(url: string, init: RequestInit) {
   throw lastError instanceof Error ? lastError : new Error("Image API request failed.");
 }
 
-export async function generateEditedImage(plan: ImagePlan, productImage: File): Promise<ImageCallResult> {
+export async function generateEditedImage(plan: ImagePlan, productImage: File, referenceImages: File[] = []): Promise<ImageCallResult> {
   const startedAt = Date.now();
   const normalizedSize = normalizeSize(plan.size);
   const config = await imageApiConfig();
@@ -137,8 +137,20 @@ export async function generateEditedImage(plan: ImagePlan, productImage: File): 
     const imageBlob = new Blob([bytes], { type: mime });
     const formData = new FormData();
     formData.append("model", modelName);
-    formData.append("prompt", plan.prompt);
+    formData.append("prompt", referenceImages.length > 0
+      ? `${plan.prompt}
+
+REFERENCE IMAGE RULES:
+The first uploaded image is the product image and must define the real SKU. The additional uploaded images are reference images only. Use reference images for visual style, composition, lighting, layout rhythm, angle, scene mood, or poster/detail-page direction, but do not replace the product identity with objects from reference images.`
+      : plan.prompt);
     formData.append("image", imageBlob, productImage.name || "product.png");
+    const selectedReferences = referenceImages.slice(0, 6);
+    for (let index = 0; index < selectedReferences.length; index += 1) {
+      const referenceImage = selectedReferences[index];
+      const refBytes = await referenceImage.arrayBuffer();
+      const refBlob = new Blob([refBytes], { type: mimeFromFile(referenceImage) });
+      formData.append("image", refBlob, referenceImage.name || `reference-${index + 1}.png`);
+    }
     formData.append("size", normalizedSize);
     formData.append("quality", "medium");
     formData.append("n", "1");

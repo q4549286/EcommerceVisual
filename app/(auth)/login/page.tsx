@@ -57,12 +57,15 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#070707] p-5 text-white sm:p-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[url('/jiaotu/home-light1.png')] bg-cover bg-center opacity-80" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,137,45,0.16),transparent_34%),linear-gradient(180deg,rgba(7,7,7,0.18),#070707_68%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,137,45,0.32),transparent_34%),radial-gradient(ellipse_at_15%_10%,rgba(37,208,255,0.14),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,7,7,0.12),#070707_68%)]" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-md flex-col justify-center">
         <div className="mb-8 flex items-center justify-between gap-3">
-          <Image src="/jiaotu/logo.svg" alt="椒图AI" width={110} height={36} className="h-8 w-auto" priority />
+          <div className="inline-flex items-center gap-2">
+            <Image src="/brand/ecommerce-mascot.png" alt="" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" priority />
+            <span className="text-xl font-black tracking-tight">电商专用</span>
+          </div>
           <span className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-white/70 backdrop-blur">
             API 管理模式
           </span>
@@ -70,8 +73,8 @@ export default function LoginPage() {
 
         <div className="rounded-[28px] border border-white/10 bg-black/[0.55] p-5 shadow-2xl shadow-black/50 backdrop-blur-xl">
           <div className="mb-6 text-center">
-            <Image src="/jiaotu/mascot.webp" alt="" width={92} height={78} className="mx-auto mb-4 h-20 w-auto" />
-            <h1 className="text-2xl font-semibold tracking-tight">配置 API，进入椒图式工作台</h1>
+            <Image src="/brand/ecommerce-mascot.png" alt="" width={92} height={92} className="mx-auto mb-4 h-20 w-20 rounded-[24px] object-cover" />
+            <h1 className="text-2xl font-semibold tracking-tight">配置 API，进入电商专用</h1>
             <p className="mt-2 text-sm leading-6 text-white/[0.55]">
               不再使用手机号登录。API Base、Key、图片模型会写入数据库持久化，后续生成统一读取这套配置。
             </p>
