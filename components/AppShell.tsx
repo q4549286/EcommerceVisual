@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useUserSession } from "@/components/UserSession";
-import { appPath } from "@/lib/client-api";
 
 const navItems = [
   { href: "/", label: "首页", mark: "⌂" },
@@ -15,7 +14,7 @@ const navItems = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { user } = useUserSession();
+  const { user, logout } = useUserSession();
 
   return (
     <div className="min-h-screen bg-[#070707] text-white">
@@ -40,12 +39,12 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Link>
           ) : null}
           {user ? (
-            <a
-              href={appPath("/api/auth/logout")}
+            <button
+              onClick={logout}
               className="rounded-full bg-gradient-to-r from-[#ff7a2f] to-[#df37d8] px-5 py-2 text-sm font-medium text-white shadow-lg shadow-[#df37d8]/20"
             >
               退出
-            </a>
+            </button>
           ) : (
             <Link href="/login" className="rounded-full bg-gradient-to-r from-[#ff7a2f] to-[#df37d8] px-5 py-2 text-sm font-medium text-white shadow-lg shadow-[#df37d8]/20">
               API 管理
