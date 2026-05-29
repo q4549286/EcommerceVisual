@@ -2,24 +2,56 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { CSSProperties, useState } from "react";
+import { CSSProperties, FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Buttons";
-import { appPath } from "@/lib/client-api";
+import { useUserSession } from "@/components/UserSession";
+import { apiFetch, appPath } from "@/lib/client-api";
+import type { AuthUser } from "@/lib/types";
 
 export default function LoginPage() {
   const params = useSearchParams();
-  const initialError = params.get("error") || "";
+  const next = params.get("next") || "";
+  const { setUser } = useUserSession();
 
   const [baseUrl, setBaseUrl] = useState("https://aispeedapi.com/v1");
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("gpt-image-2");
-  const [error, setError] = useState(initialError);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const fieldClass = "w-full rounded-2xl border border-white/10 px-4 py-3 text-sm outline-none placeholder:text-white/30 focus:border-white/30";
   const fieldStyle: CSSProperties = {
     backgroundColor: "#181818",
     color: "#ffffff",
     WebkitTextFillColor: "#ffffff"
   };
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError("");
+    if (!baseUrl.trim()) return setError("请填写 API Base URL。");
+    if (!apiKey.trim()) return setError("请填写 API Key。");
+    if (!model.trim()) return setError("请填写图片模型。");
+
+    setLoading(true);
+    try {
+      const data = await apiFetch<{ user: AuthUser; nextUrl?: string }>("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          imageApi: {
+            baseUrl: baseUrl.trim(),
+            apiKey: apiKey.trim(),
+            model: model.trim()
+          }
+        })
+      });
+      setUser(data.user);
+      window.location.assign(data.nextUrl || appPath(next || "/"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "保存 API 配置失败。");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#070707] p-5 text-white sm:p-8">
@@ -45,18 +77,13 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form action={appPath("/api/auth/login")} method="post" className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <label className="block">
               <span className="mb-2 block text-xs font-medium text-white/60">API Base URL *</span>
               <input
-                name="baseUrl"
                 value={baseUrl}
-                onChange={(event) => {
-                  setBaseUrl(event.target.value);
-                  setError("");
-                }}
+                onChange={(event) => setBaseUrl(event.target.value)}
                 placeholder="https://api.openai.com/v1"
-                required
                 className={fieldClass}
                 style={fieldStyle}
               />
@@ -67,16 +94,11 @@ export default function LoginPage() {
                 <span className="text-[11px] font-normal text-white/[0.35]">只保存到本项目数据库，不显示明文</span>
               </span>
               <input
-                name="apiKey"
                 type="password"
                 value={apiKey}
-                onChange={(event) => {
-                  setApiKey(event.target.value);
-                  setError("");
-                }}
+                onChange={(event) => setApiKey(event.target.value)}
                 placeholder="sk-..."
                 autoComplete="off"
-                required
                 className={fieldClass}
                 style={fieldStyle}
               />
@@ -84,14 +106,9 @@ export default function LoginPage() {
             <label className="block">
               <span className="mb-2 block text-xs font-medium text-white/60">图片模型 *</span>
               <input
-                name="model"
                 value={model}
-                onChange={(event) => {
-                  setModel(event.target.value);
-                  setError("");
-                }}
+                onChange={(event) => setModel(event.target.value)}
                 placeholder="gpt-image-2"
-                required
                 className={fieldClass}
                 style={fieldStyle}
               />
@@ -101,8 +118,8 @@ export default function LoginPage() {
               <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-100">{error}</div>
             ) : null}
 
-            <Button type="submit" className="w-full rounded-2xl bg-gradient-to-r from-[#ff7a2f] to-[#df37d8] py-3 text-base shadow-lg shadow-[#df37d8]/20 hover:opacity-95">
-              保存 API 并进入
+            <Button type="submit" disabled={loading} className="w-full rounded-2xl bg-gradient-to-r from-[#ff7a2f] to-[#df37d8] py-3 text-base shadow-lg shadow-[#df37d8]/20 hover:opacity-95">
+              {loading ? "保存中..." : "保存 API 并进入"}
             </Button>
           </form>
         </div>
