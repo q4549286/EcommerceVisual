@@ -431,20 +431,23 @@ export default function WorkspacePage() {
             >
               {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-40 w-full rounded-3xl object-cover" /> : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传产品图</span></>}
             </button>
-            <button
-              type="button"
-              onClick={openReferenceDialog}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={onReferenceDrop}
-              className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
-              aria-label="上传参考图"
-            >
-              {referencePreviewUrls.length > 0 ? (
-                <div className="grid h-full max-h-40 w-full grid-cols-2 gap-1 p-2">
-                  {referencePreviewUrls.slice(0, 4).map((url, index) => <img key={`${url}-${index}`} src={url} alt={`参考图 ${index + 1}`} className="h-full min-h-14 rounded-xl object-cover" />)}
-                </div>
-              ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传参考图</span></>}
-            </button>
+            <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={openReferenceDialog}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={onReferenceDrop}
+                className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+                aria-label="上传参考图"
+              >
+                {referencePreviewUrls.length > 0 ? (
+                  <div className="grid h-full max-h-40 w-full grid-cols-2 gap-1 p-2">
+                    {referencePreviewUrls.slice(0, 4).map((url, index) => <img key={`${url}-${index}`} src={url} alt={`参考图 ${index + 1}`} className="h-full min-h-14 rounded-xl object-cover" />)}
+                  </div>
+                ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传参考图</span></>}
+              </button>
+              <span className="mt-1 px-1 text-center text-[11px] text-white/[0.38]">（可选）</span>
+            </div>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
             <input ref={referenceInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onReferenceChange} className="hidden" />
           </div>
