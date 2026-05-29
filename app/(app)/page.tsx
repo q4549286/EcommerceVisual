@@ -379,16 +379,21 @@ export default function WorkspacePage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-14 pt-4 sm:px-6 md:pl-24 lg:pt-6">
+      <button
+        type="button"
+        onClick={() => setTaskDrawerOpen(true)}
+        className="fixed right-4 top-20 z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/55 px-4 py-2 text-xs text-white/80 shadow-xl shadow-black/30 backdrop-blur-xl hover:bg-black/70 sm:right-6"
+      >
+        <span>任务队列</span>
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[11px] font-semibold text-black">{runningCount}</span>
+      </button>
+
       <section className="mx-auto flex max-w-4xl flex-wrap items-center gap-3">
         <Image src="/brand/ecommerce-mascot.png" alt="" width={56} height={56} className="h-12 w-12 rounded-2xl object-cover" priority />
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-white">电商专用</h1>
           <p className="mt-1 text-sm text-white/[0.45]">手机货架、详情页、外卖上架和商品素材工作台</p>
         </div>
-        <button type="button" onClick={() => setTaskDrawerOpen(true)} className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs text-white/80 hover:bg-white/15">
-          <span>任务队列</span>
-          <span>{runningCount}</span>
-        </button>
       </section>
 
       <section className="mx-auto mt-5 max-w-4xl rounded-[30px] border border-white/[0.12] bg-black/[0.52] p-3 shadow-2xl shadow-black/[0.45] backdrop-blur-xl">
