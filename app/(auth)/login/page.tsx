@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { CSSProperties, FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Buttons";
 import { useUserSession } from "@/components/UserSession";
-import { apiFetch } from "@/lib/client-api";
+import { apiFetch, appPath } from "@/lib/client-api";
 import type { AuthUser } from "@/lib/types";
 
 export default function LoginPage() {
@@ -46,8 +46,7 @@ export default function LoginPage() {
         })
       });
       setUser(data.user);
-      router.replace(next || "/");
-      router.refresh();
+      window.location.href = appPath(next || "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存 API 配置失败。");
     } finally {
