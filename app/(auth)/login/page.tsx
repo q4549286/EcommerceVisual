@@ -61,7 +61,7 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(7,7,7,0.12),#070707_68%)]" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-md flex-col justify-center">
-        <div className="mb-8 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2">
             <Image src="/brand/ecommerce-mascot.png" alt="" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" priority />
             <span className="text-xl font-black tracking-tight">电商专用</span>
@@ -72,10 +72,9 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-[28px] border border-white/10 bg-black/[0.55] p-5 shadow-2xl shadow-black/50 backdrop-blur-xl">
-          <div className="mb-6 text-center">
-            <Image src="/brand/ecommerce-mascot.png" alt="" width={92} height={92} className="mx-auto mb-4 h-20 w-20 rounded-[24px] object-cover" />
-            <h1 className="text-2xl font-semibold tracking-tight">配置 API，进入电商专用</h1>
-            <p className="mt-2 text-sm leading-6 text-white/[0.55]">
+          <div className="mb-5">
+            <h1 className="text-xl font-semibold tracking-tight">配置 API，进入工作台</h1>
+            <p className="mt-1.5 text-sm leading-6 text-white/[0.55]">
               不再使用手机号登录。API Base、Key、图片模型会写入数据库持久化，后续生成统一读取这套配置。
             </p>
           </div>
