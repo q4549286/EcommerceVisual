@@ -519,7 +519,7 @@ export default function WorkspacePage() {
                 </FieldBlock>
                 <div>
                   <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                     {imageTypeOptions.map((item) => {
                       const active = selectedTypes.includes(item.key);
                       return (
@@ -542,7 +542,7 @@ export default function WorkspacePage() {
           <div>
             <div>
               <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 {imageTypeOptions.map((item) => {
                   const active = selectedTypes.includes(item.key);
                   return (
