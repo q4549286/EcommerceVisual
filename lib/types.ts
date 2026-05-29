@@ -17,6 +17,7 @@ export type GenerationMode = "image_to_image" | "text_to_image";
 export type ImageTypeKey =
   | "main_white_bg"
   | "platform_listing"
+  | "campaign_poster"
   | "feature_infographic"
   | "detail_specs"
   | "package_label"

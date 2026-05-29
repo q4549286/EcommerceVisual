@@ -16,6 +16,13 @@ export const imageTypeOptions: ImageTypeOption[] = [
     defaultSelected: true
   },
   {
+    key: "campaign_poster",
+    title: "手机活动海报图",
+    shortTitle: "活动海报",
+    description: "活动图/宣传图，突出商品和短卖点。",
+    defaultSelected: false
+  },
+  {
     key: "feature_infographic",
     title: "详情首屏卖点图",
     shortTitle: "首屏卖点",
@@ -586,6 +593,39 @@ function createPlan(input: ProductInput, type: ImageTypeKey): ImagePlan {
         "storefront, menu screenshot, environment-only image, unrelated props, fake platform badge"
       ),
       negativePrompt: negativePrompt(input, "storefront, menu screenshot, environment-only image, unrelated props, fake platform badge")
+    };
+  }
+
+  if (type === "campaign_poster") {
+    return {
+      type,
+      title: "手机活动海报图",
+      usage: `${platformInfo.label}活动页、店铺装修、内容投放中的商品宣传图。`,
+      size: "1024x1365",
+      localizedCopy: benefitCopy.slice(0, 2),
+      designNotes: "竖版手机活动图：商品是主角，只做短标题/短卖点，不伪造价格、折扣、倒计时或平台权益。",
+      prompt: promptWithNegative(
+        input,
+        isChineseLanguage(input.language)
+          ? [
+            communityPosterStyle(input),
+            `${intentInfo.label}运营场景的竖版手机活动海报图，适合${platformInfo.label}活动页、店铺装修或内容投放`,
+            "商品主视觉占画面 60-75%，只放一个短标题和最多两个短卖点",
+            `可使用${locale}短卖点：${sentenceJoin(benefitCopy.slice(0, 2))}`,
+            "配色取自商品或中性商业背景，不强行套平台色，不出现官方平台 UI、价格、折扣、优惠券、倒计时、二维码或水印",
+            "手机端第一眼要能识别商品，标题大而少，画面有活动感但不拥挤"
+          ].join("，")
+          : [
+            communityPosterStyle(input),
+            `vertical mobile campaign poster for ${intentInfo.label}, suitable for ${platformInfo.label} campaign page, store decoration, or paid content placement`,
+            "product hero occupies 60-75% of the image, one short headline and up to two short benefit callouts",
+            `optional short ${locale} benefits: ${sentenceJoin(benefitCopy.slice(0, 2))}`,
+            "palette derived from the product or neutral commercial background, no forced platform color, no official platform UI, no price, no discount, no coupon, no countdown, no QR code, no watermark",
+            "immediate product recognition on phone, large sparse headline, campaign energy without clutter"
+          ].join(", "),
+        "fake price, fake discount, fake coupon, countdown timer, official platform UI, QR code, watermark, tiny text"
+      ),
+      negativePrompt: negativePrompt(input, "fake price, fake discount, fake coupon, countdown timer, official platform UI, QR code, watermark, tiny text")
     };
   }
 

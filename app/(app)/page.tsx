@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, DragEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { useUserSession } from "@/components/UserSession";
 import { buildImagePlans, imageTypeOptions } from "@/lib/plans";
@@ -9,7 +9,6 @@ import type { GenerateResponse, GenerationMode, HistoryEntry, ImagePlan, ImageTy
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
-const QUICK_FEATURE_USAGE_KEY = "ecv:quick-feature-usage";
 
 const languageOptions: { value: Language; label: string }[] = [
   { value: "zh-CN", label: "简体中文" },
@@ -33,59 +32,6 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
   { value: "refresh_listing", label: "老品翻新" },
   { value: "delist_clearance", label: "下架清货" },
   { value: "sold_out_pause", label: "售罄/暂停销售" }
-];
-
-const inspirationCards = [
-  { title: "产品摄影", tone: "from-[#f8f0df] via-[#d8f3ff] to-[#ffffff]", copy: "主图精修", tall: true },
-  { title: "详情页套图", tone: "from-[#ece4d8] via-[#f4f0e8] to-[#b9936b]", copy: "卖点 / 规格 / 场景", tall: true },
-  { title: "虚拟试衣", tone: "from-[#ffd6e8] via-[#fff1f6] to-[#ffd8b8]", copy: "服装替换", tall: false },
-  { title: "活动海报", tone: "from-[#e63946] via-[#ffcf33] to-[#69d2ff]", copy: "促销海报", tall: true },
-  { title: "手机货架主图", tone: "from-[#f7f7f7] via-[#e3f2ff] to-[#cde6ff]", copy: "小图可识别", tall: false },
-  { title: "详情首屏卖点", tone: "from-[#1d1d1d] via-[#444] to-[#f6f6f6]", copy: "手机端首屏", tall: false }
-];
-
-const quickFeaturePresets: {
-  title: string;
-  hint: string;
-  imageTypes: ImageTypeKey[];
-  description: string;
-}[] = [
-  {
-    title: "产品摄影",
-    hint: "白底主图 / 货架图",
-    imageTypes: ["main_white_bg", "platform_listing"],
-    description: "保留产品真实外观，生成电商产品摄影图，商品主体放大，背景干净，适合手机端货架小图。"
-  },
-  {
-    title: "详情页套图",
-    hint: "卖点 / 规格 / 场景",
-    imageTypes: ["feature_infographic", "detail_specs", "lifestyle"],
-    description: "根据产品图生成手机端电商详情图，包含首屏卖点、规格说明和使用场景，少字大图，适合手机阅读。"
-  },
-  {
-    title: "虚拟试衣",
-    hint: "参考图驱动",
-    imageTypes: ["lifestyle"],
-    description: "使用产品图和参考图生成虚拟试穿/试用场景，保留商品款式与质感，参考图只作为人物姿态、场景或风格参考。"
-  },
-  {
-    title: "活动海报",
-    hint: "活动图 / 宣传图",
-    imageTypes: ["platform_listing", "feature_infographic"],
-    description: "生成手机端商品宣传海报，突出产品主体和核心卖点，不伪造价格、折扣、平台标识或夸张承诺。"
-  },
-  {
-    title: "只做白底图",
-    hint: "审核友好",
-    imageTypes: ["main_white_bg"],
-    description: "精修产品白底图，保留真实 SKU，纯白背景，边缘清晰，无文字、无贴纸、无多余道具。"
-  },
-  {
-    title: "手持种草",
-    hint: "种草场景",
-    imageTypes: ["lifestyle"],
-    description: "生成真实手持商品图或生活方式种草图，商品清晰占主导，画面适合手机端内容流。"
-  }
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
@@ -156,16 +102,6 @@ export default function WorkspacePage() {
   const [lightboxPlan, setLightboxPlan] = useState<ImagePlan | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
-  const [quickFeatureUsage, setQuickFeatureUsage] = useState<Record<string, number>>({});
-
-  const sortedQuickFeaturePresets = useMemo(() => {
-    const originalOrder = new Map(quickFeaturePresets.map((item, index) => [item.title, index]));
-    return [...quickFeaturePresets].sort((a, b) => {
-      const countDiff = (quickFeatureUsage[b.title] || 0) - (quickFeatureUsage[a.title] || 0);
-      if (countDiff !== 0) return countDiff;
-      return (originalOrder.get(a.title) || 0) - (originalOrder.get(b.title) || 0);
-    });
-  }, [quickFeatureUsage]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -173,10 +109,6 @@ export default function WorkspacePage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  useEffect(() => {
-    setQuickFeatureUsage(loadJSON<Record<string, number>>(QUICK_FEATURE_USAGE_KEY, {}));
   }, []);
 
   function openFileDialog() {
@@ -229,18 +161,6 @@ export default function WorkspacePage() {
 
   function toggleType(type: ImageTypeKey) {
     setSelectedTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]);
-  }
-
-  function applyQuickFeature(preset: typeof quickFeaturePresets[number]) {
-    setSelectedTypes(preset.imageTypes);
-    setDescription(preset.description);
-    setQuickFeatureUsage((current) => {
-      const next = { ...current, [preset.title]: (current[preset.title] || 0) + 1 };
-      window.localStorage.setItem(QUICK_FEATURE_USAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-    setError("");
-    show(`已切换到「${preset.title}」`, "info");
   }
 
   function switchGenerationMode(mode: GenerationMode) {
@@ -493,25 +413,6 @@ export default function WorkspacePage() {
           ))}
         </div>
 
-        {generationMode === "image_to_image" ? (
-          <div className="mb-3">
-            <div className="mb-2 px-1 text-xs font-medium text-white/[0.48]">常用任务</div>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-              {sortedQuickFeaturePresets.map((preset) => (
-                <button
-                  key={preset.title}
-                  type="button"
-                  onClick={() => applyQuickFeature(preset)}
-                  className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-3 text-left transition hover:border-white/20 hover:bg-white/10"
-                >
-                  <span className="block text-sm font-semibold text-white">{preset.title}</span>
-                  <span className="mt-1 block text-xs text-white/[0.45]">{preset.hint}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
         <div
           onDragOver={(event) => event.preventDefault()}
           onDrop={generationMode === "image_to_image" ? onDrop : undefined}
@@ -552,7 +453,7 @@ export default function WorkspacePage() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder={generationMode === "image_to_image" ? "输入产品卖点、规格、使用场景，或选择上方常用能力生成一套手机端电商图" : "直接描述要生成的电商图片：例如 便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架"}
+              placeholder={generationMode === "image_to_image" ? "输入产品卖点、规格、使用场景，再在下方选择本次要输出的手机端电商图" : "直接描述要生成的电商图片：例如 便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架"}
               className="min-h-[110px] flex-1 resize-none border-0 bg-transparent p-1 text-base leading-7 text-white outline-none placeholder:text-white/[0.32]"
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -687,29 +588,6 @@ export default function WorkspacePage() {
           </div>
         </section>
       ) : null}
-
-      <section className="mt-14">
-        <h2 className="mb-6 text-2xl font-semibold">灵感发现🔥</h2>
-        <div className="columns-2 gap-4 md:columns-3">
-          {inspirationCards.map((item, index) => (
-            <article key={`${item.title}-${index}`} className="mb-4 break-inside-avoid overflow-hidden rounded-[18px] bg-white/[0.08]">
-              <div className={`relative flex w-full items-end overflow-hidden bg-gradient-to-br ${item.tone} p-4 text-black ${item.tall ? "aspect-[3/4]" : "aspect-square"}`}>
-                <div className="absolute left-5 top-5 h-16 w-16 rounded-3xl bg-white/45 backdrop-blur" />
-                <div className="absolute right-4 top-8 h-24 w-24 rounded-full bg-black/10" />
-                <div className="absolute bottom-14 right-4 h-28 w-20 rounded-[28px] bg-white/55 shadow-xl" />
-                <div className="relative">
-                  <div className="text-3xl font-black tracking-tight">{item.copy}</div>
-                  <div className="mt-2 text-xs font-medium opacity-60">AI ecommerce visual</div>
-                </div>
-              </div>
-              <div className="px-3 py-3 text-sm font-medium">{item.title}</div>
-            </article>
-          ))}
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className={`mb-4 break-inside-avoid rounded-[18px] bg-white/[0.07] ${index % 3 === 0 ? "h-64" : "h-20"} flex items-center justify-center text-4xl text-white/[0.16]`}>✦</div>
-          ))}
-        </div>
-      </section>
 
       {isLoading && showProgressModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6 backdrop-blur">
