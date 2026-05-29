@@ -1,9 +1,30 @@
 export type Language = "en" | "zh-CN" | "zh-TW";
 
-export type ImageTypeKey = "main_white_bg" | "feature_infographic" | "detail_specs" | "lifestyle";
+export type PlatformKey =
+  | "generic"
+  | "meituan_waimai"
+  | "meituan_flash"
+  | "taobao_tmall"
+  | "jd"
+  | "douyin"
+  | "pdd"
+  | "rednote";
+
+export type ListingIntent = "new_listing" | "refresh_listing" | "delist_clearance" | "sold_out_pause";
+
+export type ImageTypeKey =
+  | "main_white_bg"
+  | "platform_listing"
+  | "feature_infographic"
+  | "detail_specs"
+  | "package_label"
+  | "lifestyle"
+  | "delist_notice";
 
 export type ProductInput = {
   productName: string;
+  platform?: PlatformKey;
+  listingIntent?: ListingIntent;
   category?: string;
   description?: string;
   language: Language;
@@ -15,6 +36,19 @@ export type ProductInput = {
   sellingPoints?: string[];
   avoid?: string[];
   imageTypes: ImageTypeKey[];
+};
+
+export type ProductAnalysis = {
+  productName: string;
+  category: string;
+  description: string;
+  brand: string;
+  material: string;
+  size: string;
+  color: string;
+  audience: string;
+  sellingPoints: string[];
+  avoid: string[];
 };
 
 export type ImageTypeOption = {

@@ -42,13 +42,13 @@ function mimeFromFile(file: File) {
 }
 
 function normalizeSize(size: string) {
-  const fallback = "2048x2048";
+  const fallback = "1024x1024";
   const match = /^(\d+)x(\d+)$/.exec(size || "");
   if (!match) return fallback;
-  const width = Math.min(3840, Math.max(1024, Math.floor(Number(match[1]) / 16) * 16));
-  const height = Math.min(3840, Math.max(1024, Math.floor(Number(match[2]) / 16) * 16));
+  const width = Math.min(1536, Math.max(768, Math.floor(Number(match[1]) / 16) * 16));
+  const height = Math.min(1536, Math.max(768, Math.floor(Number(match[2]) / 16) * 16));
   const pixels = width * height;
-  if (pixels > 8_294_400) return fallback;
+  if (pixels > 2_097_152) return fallback;
   if (Math.max(width / height, height / width) > 3) return fallback;
   return `${width}x${height}`;
 }

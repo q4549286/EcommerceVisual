@@ -7,7 +7,7 @@ import { Tag } from "@/components/ui/Tag";
 import { useToast } from "@/components/ui/Toast";
 import { useUserSession } from "@/components/UserSession";
 import { buildImagePlans, imageTypeOptions } from "@/lib/plans";
-import type { GenerateResponse, HistoryEntry, ImagePlan, ImageTypeKey, Language, ProductInput } from "@/lib/types";
+import type { GenerateResponse, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput } from "@/lib/types";
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
@@ -16,6 +16,24 @@ const languageOptions: { value: Language; label: string }[] = [
   { value: "en", label: "English" },
   { value: "zh-TW", label: "繁體中文" },
   { value: "zh-CN", label: "简体中文" }
+];
+
+const platformOptions: { value: PlatformKey; label: string }[] = [
+  { value: "meituan_waimai", label: "美团外卖" },
+  { value: "meituan_flash", label: "美团闪购" },
+  { value: "taobao_tmall", label: "淘宝/天猫" },
+  { value: "jd", label: "京东" },
+  { value: "douyin", label: "抖音电商" },
+  { value: "pdd", label: "拼多多" },
+  { value: "rednote", label: "小红书店铺" },
+  { value: "generic", label: "通用电商" }
+];
+
+const listingIntentOptions: { value: ListingIntent; label: string }[] = [
+  { value: "new_listing", label: "新品上架" },
+  { value: "refresh_listing", label: "老品翻新" },
+  { value: "delist_clearance", label: "下架清货" },
+  { value: "sold_out_pause", label: "售罄/暂停销售" }
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
@@ -50,6 +68,8 @@ export default function WorkspacePage() {
   const [productImage, setProductImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [productName, setProductName] = useState("");
+  const [platform, setPlatform] = useState<PlatformKey>("meituan_waimai");
+  const [listingIntent, setListingIntent] = useState<ListingIntent>("new_listing");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [language, setLanguage] = useState<Language>("en");
@@ -66,6 +86,7 @@ export default function WorkspacePage() {
   const [error, setError] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [stepIndex, setStepIndex] = useState(0);
   const [steps, setSteps] = useState<string[]>([]);
@@ -114,6 +135,8 @@ export default function WorkspacePage() {
   function buildInput(imageTypes = selectedTypes): ProductInput {
     return {
       productName,
+      platform,
+      listingIntent,
       category,
       description,
       language,
@@ -261,6 +284,56 @@ export default function WorkspacePage() {
     await runGeneration(selectedTypes, "new");
   }
 
+  function applyAnalysis(analysis: ProductAnalysis) {
+    if (analysis.productName) setProductName(analysis.productName);
+    if (analysis.category) setCategory(analysis.category);
+    if (analysis.description) setDescription(analysis.description);
+    if (analysis.brand) setBrand(analysis.brand);
+    if (analysis.material) setMaterial(analysis.material);
+    if (analysis.size) setSize(analysis.size);
+    if (analysis.color) setColor(analysis.color);
+    if (analysis.audience) setAudience(analysis.audience);
+    if (analysis.sellingPoints.length > 0) setSellingPoints(analysis.sellingPoints.join("\n"));
+    if (analysis.avoid.length > 0) setAvoid(analysis.avoid.join("\n"));
+  }
+
+  async function analyzeProduct() {
+    if (!user) {
+      setError("请先登录。");
+      return;
+    }
+    if (!productImage) {
+      setError("请先上传商品图。");
+      return;
+    }
+
+    setError("");
+    setIsAnalyzing(true);
+    const formData = new FormData();
+    formData.append("productImage", productImage);
+    formData.append("language", language);
+    formData.append("platform", platform);
+
+    try {
+      const response = await fetch("/api/analyze-product", {
+        method: "POST",
+        body: formData
+      });
+      const data: { ok: boolean; analysis?: ProductAnalysis; error?: string } = await response.json();
+      if (!data.ok || !data.analysis) {
+        throw new Error(data.error || "商品识别失败。");
+      }
+      applyAnalysis(data.analysis);
+      show("已自动识别并回填商品信息", "success");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "商品识别失败。";
+      setError(message);
+      show(message, "danger");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
   async function regeneratePlan(plan: ImagePlan) {
     await runGeneration([plan.type], "replace");
   }
@@ -283,7 +356,7 @@ export default function WorkspacePage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">工作台</h1>
-          <p className="mt-1 text-sm text-slate-500">上传商品图，自动生成主图、亮点图、细节图、场景图。</p>
+          <p className="mt-1 text-sm text-slate-500">上传商品图，生成美团外卖/闪购、淘宝、京东、抖音等平台专用素材。</p>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-500">
           <span className="rounded-full border border-slate-200 bg-white px-3 py-1">
@@ -333,23 +406,54 @@ export default function WorkspacePage() {
               </div>
               <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} onClick={(event) => event.stopPropagation()} className="hidden" />
               {previewUrl ? (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    openFileDialog();
-                  }}
-                  className="mt-2 text-xs text-slate-500 underline hover:text-slate-900"
-                >
-                  重新选择
-                </button>
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      openFileDialog();
+                    }}
+                    className="rounded border border-slate-200 px-2.5 py-1 text-xs text-slate-600 hover:bg-white hover:text-slate-900"
+                  >
+                    重新选择
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      analyzeProduct();
+                    }}
+                    disabled={isAnalyzing || isLoading}
+                    className="rounded bg-slate-900 px-2.5 py-1 text-xs text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isAnalyzing ? "识别中..." : "自动识别商品信息"}
+                  </button>
+                </div>
               ) : null}
             </Field>
 
             <Field label="商品名称" required>
               <TextInput value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="例：可携式果汁机" />
             </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="目标平台" required>
+                <Select value={platform} onChange={(event) => setPlatform(event.target.value as PlatformKey)}>
+                  {platformOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="运营场景" required>
+                <Select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)}>
+                  {listingIntentOptions.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
 
             <Field label="商品类目" hint="可选">
               <TextInput value={category} onChange={(event) => setCategory(event.target.value)} placeholder="例：厨房家电" />
@@ -399,7 +503,7 @@ export default function WorkspacePage() {
               </div>
             </details>
 
-            <Button type="button" onClick={generate} disabled={isLoading} className="w-full py-3 text-base">
+            <Button type="button" onClick={generate} disabled={isLoading || isAnalyzing} className="w-full py-3 text-base">
               {isLoading ? "生成中..." : `开始生成（${selectedTypes.length} 积分）`}
             </Button>
           </div>
