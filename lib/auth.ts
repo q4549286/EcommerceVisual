@@ -132,21 +132,31 @@ export async function createSession(userId: string) {
   return { token, expiresAt };
 }
 
-export function setSessionCookie(response: NextResponse, token: string, expiresAt: Date) {
+export function secureCookieForRequest(request: Request) {
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  if (forwardedProto) return forwardedProto === "https";
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function setSessionCookie(response: NextResponse, token: string, expiresAt: Date, secure = false) {
   response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     expires: expiresAt
   });
 }
 
-export function clearSessionCookie(response: NextResponse) {
+export function clearSessionCookie(response: NextResponse, secure = false) {
   response.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: 0
   });
