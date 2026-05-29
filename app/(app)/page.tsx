@@ -36,10 +36,10 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
 ];
 
 const inspirationCards = [
-  { title: "产品摄影图", tone: "from-[#f8f0df] via-[#d8f3ff] to-[#ffffff]", copy: "主图精修", tall: true },
-  { title: "电商详情图", tone: "from-[#ece4d8] via-[#f4f0e8] to-[#b9936b]", copy: "卖点 / 规格 / 场景", tall: true },
+  { title: "产品摄影", tone: "from-[#f8f0df] via-[#d8f3ff] to-[#ffffff]", copy: "主图精修", tall: true },
+  { title: "详情页套图", tone: "from-[#ece4d8] via-[#f4f0e8] to-[#b9936b]", copy: "卖点 / 规格 / 场景", tall: true },
   { title: "虚拟试衣", tone: "from-[#ffd6e8] via-[#fff1f6] to-[#ffd8b8]", copy: "服装替换", tall: false },
-  { title: "商品海报图制作", tone: "from-[#e63946] via-[#ffcf33] to-[#69d2ff]", copy: "促销海报", tall: true },
+  { title: "活动海报", tone: "from-[#e63946] via-[#ffcf33] to-[#69d2ff]", copy: "促销海报", tall: true },
   { title: "手机货架主图", tone: "from-[#f7f7f7] via-[#e3f2ff] to-[#cde6ff]", copy: "小图可识别", tall: false },
   { title: "详情首屏卖点", tone: "from-[#1d1d1d] via-[#444] to-[#f6f6f6]", copy: "手机端首屏", tall: false }
 ];
@@ -51,13 +51,13 @@ const quickFeaturePresets: {
   description: string;
 }[] = [
   {
-    title: "产品摄影图",
+    title: "产品摄影",
     hint: "白底主图 / 货架图",
     imageTypes: ["main_white_bg", "platform_listing"],
     description: "保留产品真实外观，生成电商产品摄影图，商品主体放大，背景干净，适合手机端货架小图。"
   },
   {
-    title: "电商详情图",
+    title: "详情页套图",
     hint: "卖点 / 规格 / 场景",
     imageTypes: ["feature_infographic", "detail_specs", "lifestyle"],
     description: "根据产品图生成手机端电商详情图，包含首屏卖点、规格说明和使用场景，少字大图，适合手机阅读。"
@@ -69,19 +69,19 @@ const quickFeaturePresets: {
     description: "使用产品图和参考图生成虚拟试穿/试用场景，保留商品款式与质感，参考图只作为人物姿态、场景或风格参考。"
   },
   {
-    title: "商品海报图制作",
+    title: "活动海报",
     hint: "活动图 / 宣传图",
     imageTypes: ["platform_listing", "feature_infographic"],
     description: "生成手机端商品宣传海报，突出产品主体和核心卖点，不伪造价格、折扣、平台标识或夸张承诺。"
   },
   {
-    title: "产品精修白底图",
+    title: "只做白底图",
     hint: "审核友好",
     imageTypes: ["main_white_bg"],
     description: "精修产品白底图，保留真实 SKU，纯白背景，边缘清晰，无文字、无贴纸、无多余道具。"
   },
   {
-    title: "手持商品图",
+    title: "手持种草",
     hint: "种草场景",
     imageTypes: ["lifestyle"],
     description: "生成真实手持商品图或生活方式种草图，商品清晰占主导，画面适合手机端内容流。"
@@ -241,6 +241,11 @@ export default function WorkspacePage() {
     });
     setError("");
     show(`已切换到「${preset.title}」`, "info");
+  }
+
+  function switchGenerationMode(mode: GenerationMode) {
+    setGenerationMode(mode);
+    setError("");
   }
 
   function buildInput(imageTypes = selectedTypes): ProductInput {
@@ -480,10 +485,7 @@ export default function WorkspacePage() {
             <button
               key={item.value}
               type="button"
-              onClick={() => {
-                setGenerationMode(item.value);
-                setError("");
-              }}
+              onClick={() => switchGenerationMode(item.value)}
               className={`rounded-full px-5 py-2 text-sm transition ${generationMode === item.value ? "bg-white text-black" : "border border-white/10 bg-white/[0.08] text-white/[0.62] hover:bg-white/[0.12]"}`}
             >
               {item.label}
@@ -492,19 +494,22 @@ export default function WorkspacePage() {
         </div>
 
         {generationMode === "image_to_image" ? (
-        <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3">
-          {sortedQuickFeaturePresets.map((preset) => (
-            <button
-              key={preset.title}
-              type="button"
-              onClick={() => applyQuickFeature(preset)}
-              className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-3 text-left transition hover:border-white/20 hover:bg-white/10"
-            >
-              <span className="block text-sm font-semibold text-white">{preset.title}</span>
-              <span className="mt-1 block text-xs text-white/[0.45]">{preset.hint}</span>
-            </button>
-          ))}
-        </div>
+          <div className="mb-3">
+            <div className="mb-2 px-1 text-xs font-medium text-white/[0.48]">常用任务</div>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+              {sortedQuickFeaturePresets.map((preset) => (
+                <button
+                  key={preset.title}
+                  type="button"
+                  onClick={() => applyQuickFeature(preset)}
+                  className="rounded-2xl border border-white/10 bg-white/[0.06] px-3 py-3 text-left transition hover:border-white/20 hover:bg-white/10"
+                >
+                  <span className="block text-sm font-semibold text-white">{preset.title}</span>
+                  <span className="mt-1 block text-xs text-white/[0.45]">{preset.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         ) : null}
 
         <div
@@ -514,13 +519,14 @@ export default function WorkspacePage() {
         >
           {generationMode === "image_to_image" ? (
           <div className="grid grid-cols-2 gap-4 border-white/10 sm:border-r sm:pr-4">
+            <div className="col-span-2 px-1 text-xs font-medium text-white/[0.48]">素材输入</div>
             <button
               type="button"
               onClick={openFileDialog}
               className="flex min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
               aria-label="上传产品图"
             >
-              {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-40 w-full rounded-3xl object-cover" /> : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">产品图</span></>}
+              {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-40 w-full rounded-3xl object-cover" /> : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传产品图</span></>}
             </button>
             <button
               type="button"
@@ -534,7 +540,7 @@ export default function WorkspacePage() {
                 <div className="grid h-full max-h-40 w-full grid-cols-2 gap-1 p-2">
                   {referencePreviewUrls.slice(0, 4).map((url, index) => <img key={`${url}-${index}`} src={url} alt={`参考图 ${index + 1}`} className="h-full min-h-14 rounded-xl object-cover" />)}
                 </div>
-              ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">参考图</span></>}
+              ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传参考图</span></>}
             </button>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
             <input ref={referenceInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onReferenceChange} className="hidden" />
@@ -542,6 +548,7 @@ export default function WorkspacePage() {
           ) : null}
 
           <div className="flex min-w-0 flex-col gap-3">
+            <div className="px-1 text-xs font-medium text-white/[0.48]">{generationMode === "image_to_image" ? "补充要求" : "画面描述"}</div>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -572,35 +579,64 @@ export default function WorkspacePage() {
       </section>
 
       <section className="mx-auto mt-5 max-w-4xl rounded-[24px] border border-white/[0.08] bg-white/5 p-4 backdrop-blur">
-        <div className="grid gap-3 md:grid-cols-3">
-          <FieldBlock label={generationMode === "text_to_image" ? "主题/商品名" : "产品名"}>
-            <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder={generationMode === "text_to_image" ? "可选，例：可携式果汁机" : "例：可携式果汁机"} className={inputClass} />
-          </FieldBlock>
-          <FieldBlock label="运营场景">
-            <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={inputClass}>
-              {listingIntentOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
-            </select>
-          </FieldBlock>
-          <FieldBlock label="类目">
-            <input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="例：餐饮/零售/服饰" className={inputClass} />
-          </FieldBlock>
-        </div>
+        {generationMode === "image_to_image" ? (
+          <>
+            <div className="mb-4 text-xs font-medium text-white/[0.48]">商品资料</div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <FieldBlock label="产品名">
+                <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="例：可携式果汁机" className={inputClass} />
+              </FieldBlock>
+              <FieldBlock label="运营场景">
+                <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={inputClass}>
+                  {listingIntentOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
+                </select>
+              </FieldBlock>
+              <FieldBlock label="类目">
+                <input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="例：餐饮/零售/服饰" className={inputClass} />
+              </FieldBlock>
+            </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FieldBlock label="品牌"><input value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} /></FieldBlock>
-            <FieldBlock label="材质"><input value={material} onChange={(e) => setMaterial(e.target.value)} className={inputClass} /></FieldBlock>
-            <FieldBlock label="尺寸参数"><input value={size} onChange={(e) => setSize(e.target.value)} className={inputClass} /></FieldBlock>
-            <FieldBlock label="颜色"><input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} /></FieldBlock>
-            <FieldBlock label="适用人群"><input value={audience} onChange={(e) => setAudience(e.target.value)} className={inputClass} /></FieldBlock>
-            <FieldBlock label="避免词"><input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="假价格、二维码、水印" className={inputClass} /></FieldBlock>
-          </div>
-          <div className="space-y-3">
-            <FieldBlock label="核心卖点">
-              <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={4} placeholder="每行一个卖点" className={`${inputClass} resize-none`} />
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FieldBlock label="品牌"><input value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} /></FieldBlock>
+                <FieldBlock label="材质"><input value={material} onChange={(e) => setMaterial(e.target.value)} className={inputClass} /></FieldBlock>
+                <FieldBlock label="尺寸参数"><input value={size} onChange={(e) => setSize(e.target.value)} className={inputClass} /></FieldBlock>
+                <FieldBlock label="颜色"><input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} /></FieldBlock>
+                <FieldBlock label="适用人群"><input value={audience} onChange={(e) => setAudience(e.target.value)} className={inputClass} /></FieldBlock>
+                <FieldBlock label="避免词"><input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="假价格、二维码、水印" className={inputClass} /></FieldBlock>
+              </div>
+              <div className="space-y-3">
+                <FieldBlock label="核心卖点">
+                  <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={4} placeholder="每行一个卖点" className={`${inputClass} resize-none`} />
+                </FieldBlock>
+                <div>
+                  <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {imageTypeOptions.map((item) => {
+                      const active = selectedTypes.includes(item.key);
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => toggleType(item.key)}
+                          className={`rounded-2xl border px-3 py-3 text-left text-xs transition ${active ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.06] text-white/60 hover:bg-white/10"}`}
+                        >
+                          <span className="block font-medium">{item.shortTitle}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <FieldBlock label="主题/商品名">
+              <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="可选，例：可携式果汁机" className={inputClass} />
             </FieldBlock>
             <div>
-              <div className="mb-2 text-xs font-medium text-white/[0.55]">默认生成图片</div>
+              <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {imageTypeOptions.map((item) => {
                   const active = selectedTypes.includes(item.key);
@@ -618,7 +654,7 @@ export default function WorkspacePage() {
               </div>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
       {plans.length > 0 ? (
