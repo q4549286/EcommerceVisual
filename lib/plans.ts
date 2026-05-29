@@ -23,6 +23,20 @@ export const imageTypeOptions: ImageTypeOption[] = [
     defaultSelected: false
   },
   {
+    key: "virtual_try_on",
+    title: "虚拟试衣图",
+    shortTitle: "虚拟试衣",
+    description: "参考图驱动的服装替换或试穿效果。",
+    defaultSelected: false
+  },
+  {
+    key: "handheld_product",
+    title: "手持商品图",
+    shortTitle: "手持商品",
+    description: "真实手持商品图，适合种草和内容流。",
+    defaultSelected: false
+  },
+  {
     key: "feature_infographic",
     title: "详情首屏卖点图",
     shortTitle: "首屏卖点",
@@ -626,6 +640,64 @@ function createPlan(input: ProductInput, type: ImageTypeKey): ImagePlan {
         "fake price, fake discount, fake coupon, countdown timer, official platform UI, QR code, watermark, tiny text"
       ),
       negativePrompt: negativePrompt(input, "fake price, fake discount, fake coupon, countdown timer, official platform UI, QR code, watermark, tiny text")
+    };
+  }
+
+  if (type === "virtual_try_on") {
+    return {
+      type,
+      title: "虚拟试衣图",
+      usage: "服装试穿、模特替换、参考图姿态/场景驱动的穿搭展示。",
+      size: "1024x1365",
+      localizedCopy: [],
+      designNotes: "参考图驱动的试衣结果，保留真实服装结构和面料，适合手机端种草。",
+      prompt: promptWithNegative(
+        input,
+        isChineseLanguage(input.language)
+          ? [
+            communityLifestyleStyle(input),
+            "虚拟试衣图，保留服装版型、颜色、面料纹理和真实穿着效果",
+            "如果有参考图，只借用姿态、场景、镜头和氛围，不改变商品本身",
+            "适合手机端穿搭种草，人物自然，服装完整，不出现错误衣型、错误颜色或夸张瘦身效果"
+          ].join("，")
+          : [
+            communityLifestyleStyle(input),
+            "virtual try-on image, preserve garment cut, color, fabric texture, and realistic wearing effect",
+            "if reference images exist, only borrow pose, scene, framing, and mood; do not replace product identity",
+            "mobile-first fashion try-on asset, natural person, complete garment, no wrong silhouette, no wrong color, no exaggerated slimming effect"
+          ].join(", "),
+        "wrong garment shape, wrong color, distorted sleeves, missing fabric details, fake body proportions, exaggerated slimming, watermark"
+      ),
+      negativePrompt: negativePrompt(input, "wrong garment shape, wrong color, distorted sleeves, missing fabric details, fake body proportions, exaggerated slimming, watermark")
+    };
+  }
+
+  if (type === "handheld_product") {
+    return {
+      type,
+      title: "手持商品图",
+      usage: "真实手持商品、开箱、口播种草、内容流封面。",
+      size: "1024x1365",
+      localizedCopy: [],
+      designNotes: "手持展示场景，商品要清楚大方，适合手机内容流和种草封面。",
+      prompt: promptWithNegative(
+        input,
+        isChineseLanguage(input.language)
+          ? [
+            communityLifestyleStyle(input),
+            "真实手持商品图，商品在手中清晰可见，主体仍然是商品本身",
+            "人物表情自然，手部结构正常，不做夸张摆拍，适合手机端内容流和种草封面",
+            "如果有参考图，只借用姿势、角度和场景气氛，不改商品身份"
+          ].join("，")
+          : [
+            communityLifestyleStyle(input),
+            "real handheld product image, product clearly visible in hand, product remains the hero",
+            "natural expression, normal hand anatomy, no exaggerated pose, suitable for mobile content feed and social commerce cover",
+            "if reference images exist, only borrow pose, angle, and scene mood; do not change product identity"
+          ].join(", "),
+        "wrong hand anatomy, extra fingers, distorted product, floating object, fake logo, watermark"
+      ),
+      negativePrompt: negativePrompt(input, "wrong hand anatomy, extra fingers, distorted product, floating object, fake logo, watermark")
     };
   }
 

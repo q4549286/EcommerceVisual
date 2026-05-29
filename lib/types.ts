@@ -21,6 +21,8 @@ export type ImageTypeKey =
   | "feature_infographic"
   | "detail_specs"
   | "package_label"
+  | "virtual_try_on"
+  | "handheld_product"
   | "lifestyle"
   | "delist_notice";
 
