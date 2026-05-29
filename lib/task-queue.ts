@@ -150,6 +150,35 @@ export async function enqueueTask(taskId: string) {
   void drainQueue();
 }
 
+export async function cancelUserTask(userId: string, taskId: string) {
+  const task = await prisma.generationTask.findFirst({
+    where: { id: taskId, userId },
+    select: { status: true }
+  });
+
+  if (!task) {
+    return { ok: false, status: 404, error: "任务不存在。" };
+  }
+  if (!["PENDING", "RUNNING"].includes(task.status)) {
+    return { ok: false, status: 400, error: "只有等待中或生成中的任务可以终止。" };
+  }
+
+  const index = queuedTaskIds.indexOf(taskId);
+  if (index >= 0) queuedTaskIds.splice(index, 1);
+
+  await prisma.generationTask.update({
+    where: { id: taskId },
+    data: {
+      status: "CANCELED",
+      message: "已终止",
+      error: null,
+      finishedAt: new Date()
+    }
+  });
+
+  return { ok: true, status: 200 };
+}
+
 export async function resumeIncompleteTasks(userId?: string) {
   const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
   const tasks = await prisma.generationTask.findMany({
@@ -230,6 +259,12 @@ export async function processTask(taskId: string) {
       }).catch(() => undefined);
     }
   });
+
+  const currentTask = await prisma.generationTask.findUnique({
+    where: { id: taskId },
+    select: { status: true }
+  }).catch(() => null);
+  if (currentTask?.status === "CANCELED") return;
 
   await prisma.generationTask.update({
     where: { id: taskId },

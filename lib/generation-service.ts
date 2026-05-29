@@ -4,7 +4,7 @@ import { persistGeneratedImageUrl } from "@/lib/image-storage";
 import { buildImagePlans } from "@/lib/plans";
 import { prisma } from "@/lib/prisma";
 import { writeApiLog, writeSystemLog } from "@/lib/server-logs";
-import type { CallLog, ImagePlan, ProductInput } from "@/lib/types";
+import type { CallLog, ImagePlan, ProductInput, QualityMode } from "@/lib/types";
 
 export type GenerationAssetBundle = {
   productImage?: {
@@ -142,8 +142,19 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
 
     const productImageFile = isTextToImage || !input.productImage ? null : input.productImage;
     const referenceImages = input.referenceImages || [];
+    const qualityMode: QualityMode = input.input.qualityMode === "hd" ? "hd" : "fast";
 
     for (let index = 0; index < plans.length; index += 1) {
+      if (input.taskId) {
+        const latestTask = await prisma.generationTask.findUnique({
+          where: { id: input.taskId },
+          select: { status: true }
+        }).catch(() => null);
+        if (latestTask?.status === "CANCELED") {
+          return { ok: false, generationId, plans: generatedPlans, logs, error: "任务已终止。" };
+        }
+      }
+
       const plan = plans[index];
       const completed = completedByType.get(plan.type);
       if (completed?.imageUrl) {
@@ -165,8 +176,8 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
       });
 
       const result = isTextToImage
-        ? await generateTextImage(plan)
-        : await generateEditedImage(plan, productImageFile as File, referenceImages);
+        ? await generateTextImage(plan, qualityMode)
+        : await generateEditedImage(plan, productImageFile as File, referenceImages, qualityMode);
 
       logs.push(result.log);
       await writeApiLog(input.userId, "image.generate", result.log);

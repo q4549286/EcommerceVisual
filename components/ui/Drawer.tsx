@@ -8,7 +8,8 @@ export function Drawer({
   description,
   onClose,
   children,
-  width = 520
+  width = 520,
+  closeLabel = "关闭"
 }: {
   open: boolean;
   title: string;
@@ -16,6 +17,7 @@ export function Drawer({
   onClose: () => void;
   children: ReactNode;
   width?: number;
+  closeLabel?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -41,8 +43,8 @@ export function Drawer({
             <h3 className="truncate text-base font-semibold text-slate-900">{title}</h3>
             {description ? <p className="mt-1 text-xs text-slate-500">{description}</p> : null}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-900" aria-label="关闭">
-            ✕
+          <button onClick={onClose} className="shrink-0 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-500 hover:border-slate-300 hover:text-slate-900" aria-label={closeLabel}>
+            {closeLabel}
           </button>
         </header>
         <div className="flex-1 overflow-auto px-6 py-5">{children}</div>

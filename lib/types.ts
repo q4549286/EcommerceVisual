@@ -14,6 +14,8 @@ export type ListingIntent = "new_listing" | "refresh_listing" | "delist_clearanc
 
 export type GenerationMode = "image_to_image" | "text_to_image";
 
+export type QualityMode = "fast" | "hd";
+
 export type TaskStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELED";
 
 export type ImageTypeKey =
@@ -44,6 +46,7 @@ export type ProductInput = {
   sellingPoints?: string[];
   avoid?: string[];
   imageTypes: ImageTypeKey[];
+  qualityMode?: QualityMode;
 };
 
 export type ProductAnalysis = {

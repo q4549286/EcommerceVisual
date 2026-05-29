@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { AuthError, requireUser } from "@/lib/auth";
-import { toTaskSummary } from "@/lib/task-queue";
+import { cancelUserTask, toTaskSummary } from "@/lib/task-queue";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -30,6 +30,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 500;
     const message = error instanceof Error ? error.message : "读取任务失败。";
+    return NextResponse.json({ ok: false, error: message }, { status });
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await requireUser(request);
+    const { id } = await params;
+    const result = await cancelUserTask(user.id, id);
+    if (!result.ok) {
+      return NextResponse.json({ ok: false, error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const status = error instanceof AuthError ? error.status : 500;
+    const message = error instanceof Error ? error.message : "终止任务失败。";
     return NextResponse.json({ ok: false, error: message }, { status });
   }
 }

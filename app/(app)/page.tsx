@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Drawer } from "@/components/ui/Drawer";
 import { useUserSession } from "@/components/UserSession";
 import { imageTypeOptions } from "@/lib/plans";
-import type { GenerationMode, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput, TaskSummary } from "@/lib/types";
+import type { GenerationMode, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput, QualityMode, TaskSummary } from "@/lib/types";
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
@@ -35,6 +35,11 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
   { value: "refresh_listing", label: "老品翻新" },
   { value: "delist_clearance", label: "下架清货" },
   { value: "sold_out_pause", label: "售罄/暂停销售" }
+];
+
+const qualityModeOptions: { value: QualityMode; label: string; hint: string }[] = [
+  { value: "fast", label: "快速模式", hint: "1K" },
+  { value: "hd", label: "高清模式", hint: "2K" }
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
@@ -85,6 +90,7 @@ export default function WorkspacePage() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [language, setLanguage] = useState<Language>("zh-CN");
+  const [qualityMode, setQualityMode] = useState<QualityMode>("fast");
   const [brand, setBrand] = useState("");
   const [material, setMaterial] = useState("");
   const [size, setSize] = useState("");
@@ -220,7 +226,8 @@ export default function WorkspacePage() {
       audience,
       sellingPoints: splitLines(sellingPoints),
       avoid: splitLines(avoid),
-      imageTypes
+      imageTypes,
+      qualityMode
     };
   }
 
@@ -321,7 +328,6 @@ export default function WorkspacePage() {
       const data: { ok: boolean; taskId?: string; error?: string } = await response.json();
       if (!response.ok || !data.ok || !data.taskId) throw new Error(data.error || "创建任务失败。");
       resetWorkspaceForNextImage();
-      setTaskDrawerOpen(true);
       setActiveTaskId(data.taskId);
       await loadTasks();
       show("任务已加入后台队列", "success");
@@ -364,13 +370,26 @@ export default function WorkspacePage() {
       const data: { ok: boolean; analysis?: ProductAnalysis; error?: string } = await response.json();
       if (!data.ok || !data.analysis) throw new Error(data.error || "商品识别失败。");
       applyAnalysis(data.analysis);
-      show("已自动填写下列信息", "success");
+      show("已填写下列信息", "success");
     } catch (err) {
       const message = err instanceof Error ? err.message : "商品识别失败。";
       setError(message);
       show(message, "danger");
     } finally {
       setIsAnalyzing(false);
+    }
+  }
+
+  async function cancelTask(taskId: string) {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+      const data: { ok: boolean; error?: string } = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || "终止任务失败。");
+      show("任务已终止", "success");
+      await loadTasks();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "终止任务失败。";
+      show(message, "danger");
     }
   }
 
@@ -475,6 +494,19 @@ export default function WorkspacePage() {
               className="min-h-[110px] flex-1 resize-none border-0 bg-transparent p-1 text-base leading-7 text-white outline-none placeholder:text-white/[0.32]"
             />
             <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-full border border-white/10 bg-white/[0.07] p-1">
+                {qualityModeOptions.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setQualityMode(item.value)}
+                    className={`rounded-full px-3 py-1.5 text-xs transition ${qualityMode === item.value ? "bg-white text-black" : "text-white/60 hover:text-white"}`}
+                  >
+                    {item.label}
+                    <span className={qualityMode === item.value ? "ml-1 text-black/55" : "ml-1 text-white/35"}>{item.hint}</span>
+                  </button>
+                ))}
+              </div>
               {generationMode === "image_to_image" ? (
                 <>
                   <select value={platform} onChange={(event) => setPlatform(event.target.value as PlatformKey)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
@@ -485,7 +517,7 @@ export default function WorkspacePage() {
                   </select>
                   {referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
                   <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isSubmitting || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
-                    {isAnalyzing ? "填写中" : "自动填写下列信息"}
+                    {isAnalyzing ? "填写中" : "点击填写下列信息"}
                   </button>
                 </>
               ) : null}
@@ -602,6 +634,7 @@ export default function WorkspacePage() {
         title="任务队列"
         description="提交后会在这里持续刷新，刷新页面也能继续看状态。"
         width={760}
+        closeLabel="收起"
       >
         <div className="space-y-3">
           {tasks.length === 0 ? (
@@ -611,9 +644,8 @@ export default function WorkspacePage() {
               const active = task.id === activeTaskId;
               const taskPlansList = task.plans || [];
               return (
-                <button
+                <div
                   key={task.id}
-                  type="button"
                   onClick={() => setActiveTaskId(task.id)}
                   className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
                 >
@@ -622,7 +654,21 @@ export default function WorkspacePage() {
                       <div className="truncate text-sm font-medium text-slate-900">{task.title}</div>
                       <div className="mt-1 text-xs text-slate-500">{task.status} · {task.progress}% · {task.message || "等待中"}</div>
                     </div>
-                    <div className="rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-500">{task.totalSteps} 张</div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="rounded-full border border-slate-200 px-2 py-1 text-[11px] text-slate-500">{task.totalSteps} 张</div>
+                      {["PENDING", "RUNNING"].includes(task.status) ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void cancelTask(task.id);
+                          }}
+                          className="rounded-full border border-red-200 px-2.5 py-1 text-[11px] text-red-600 hover:bg-red-50"
+                        >
+                          终止
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
                     <div className="h-full rounded-full bg-slate-900" style={{ width: `${task.progress}%` }} />
@@ -636,7 +682,7 @@ export default function WorkspacePage() {
                       ))}
                     </div>
                   ) : null}
-                </button>
+                </div>
               );
             })
           )}

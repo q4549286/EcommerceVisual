@@ -78,7 +78,7 @@ export default function HistoryPage() {
   }, [history, keyword, filter]);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 md:pl-24">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">历史记录</h1>

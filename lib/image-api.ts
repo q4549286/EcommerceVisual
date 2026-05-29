@@ -1,4 +1,4 @@
-import type { CallLog, ImagePlan } from "./types";
+import type { CallLog, ImagePlan, QualityMode } from "./types";
 import { getImageApiSettings } from "@/lib/settings";
 
 const MAX_RETRIES = 2;
@@ -42,14 +42,16 @@ function mimeFromFile(file: File) {
   return "image/png";
 }
 
-function normalizeSize(size: string) {
+function normalizeSize(size: string, qualityMode: QualityMode = "fast") {
   const fallback = "1024x1024";
   const match = /^(\d+)x(\d+)$/.exec(size || "");
   if (!match) return fallback;
-  const width = Math.min(1536, Math.max(768, Math.floor(Number(match[1]) / 16) * 16));
-  const height = Math.min(1536, Math.max(768, Math.floor(Number(match[2]) / 16) * 16));
-  const pixels = width * height;
-  if (pixels > 2_097_152) return fallback;
+  const maxSide = qualityMode === "hd" ? 2048 : 1024;
+  const sourceWidth = Number(match[1]);
+  const sourceHeight = Number(match[2]);
+  const ratioScale = maxSide / Math.max(sourceWidth, sourceHeight);
+  const width = Math.max(768, Math.floor(sourceWidth * ratioScale / 16) * 16);
+  const height = Math.max(768, Math.floor(sourceHeight * ratioScale / 16) * 16);
   if (Math.max(width / height, height / width) > 3) return fallback;
   return `${width}x${height}`;
 }
@@ -131,9 +133,9 @@ async function requestWithRetry(url: string, init: RequestInit) {
   throw lastError instanceof Error ? lastError : new Error("Image API request failed.");
 }
 
-export async function generateEditedImage(plan: ImagePlan, productImage: File, referenceImages: File[] = []): Promise<ImageCallResult> {
+export async function generateEditedImage(plan: ImagePlan, productImage: File, referenceImages: File[] = [], qualityMode: QualityMode = "fast"): Promise<ImageCallResult> {
   const startedAt = Date.now();
-  const normalizedSize = normalizeSize(plan.size);
+  const normalizedSize = normalizeSize(plan.size, qualityMode);
   const config = await imageApiConfig();
   const endpointUrl = config.baseUrl ? `${config.baseUrl}/images/edits` : "";
   const modelName = config.model;
@@ -178,7 +180,7 @@ The first uploaded image is the product image and must define the real SKU. The 
       formData.append("image", refBlob, referenceImage.name || `reference-${index + 1}.png`);
     }
     formData.append("size", normalizedSize);
-    formData.append("quality", "medium");
+    formData.append("quality", qualityMode === "hd" ? "high" : "medium");
     formData.append("n", "1");
     formData.append("output_format", "png");
     formData.append("response_format", "b64_json");
@@ -208,9 +210,9 @@ The first uploaded image is the product image and must define the real SKU. The 
   }
 }
 
-export async function generateTextImage(plan: ImagePlan): Promise<ImageCallResult> {
+export async function generateTextImage(plan: ImagePlan, qualityMode: QualityMode = "fast"): Promise<ImageCallResult> {
   const startedAt = Date.now();
-  const normalizedSize = normalizeSize(plan.size);
+  const normalizedSize = normalizeSize(plan.size, qualityMode);
   const config = await imageApiConfig();
   const endpointUrl = config.baseUrl ? `${config.baseUrl}/images/generations` : "";
   const modelName = config.model;
@@ -246,7 +248,7 @@ export async function generateTextImage(plan: ImagePlan): Promise<ImageCallResul
         model: modelName,
         prompt: plan.prompt,
         size: normalizedSize,
-        quality: "medium",
+        quality: qualityMode === "hd" ? "high" : "medium",
         n: 1,
         output_format: "png",
         response_format: "b64_json"
