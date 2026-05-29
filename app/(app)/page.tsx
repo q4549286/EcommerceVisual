@@ -169,9 +169,9 @@ export default function WorkspacePage() {
   }
 
   function buildInput(imageTypes = selectedTypes): ProductInput {
-    const fallbackName = generationMode === "text_to_image" ? "文生图" : "";
+    const normalizedProductName = generationMode === "text_to_image" ? "文生图" : productName.trim();
     return {
-      productName: productName.trim() || fallbackName,
+      productName: normalizedProductName,
       generationMode,
       platform,
       listingIntent,
@@ -193,7 +193,7 @@ export default function WorkspacePage() {
     if (!user) return "请先进入 API 管理模式。";
     if (generationMode === "image_to_image" && !productImage) return "请先上传商品图。";
     if (generationMode === "image_to_image" && !productName.trim()) return "请填写商品名称。";
-    if (generationMode === "text_to_image" && !productName.trim() && !description.trim()) return "请写一句想生成的商品图描述。";
+    if (generationMode === "text_to_image" && !description.trim()) return "请写一句想生成的商品图描述。";
     if (imageTypes.length === 0) return "请至少选择一种图片类型。";
     if (user.credits < imageTypes.length) return `额度不足，本次需要 ${imageTypes.length} 点。`;
     return "";
@@ -459,17 +459,19 @@ export default function WorkspacePage() {
               className="min-h-[110px] flex-1 resize-none border-0 bg-transparent p-1 text-base leading-7 text-white outline-none placeholder:text-white/[0.32]"
             />
             <div className="flex flex-wrap items-center gap-2">
-              <select value={platform} onChange={(event) => setPlatform(event.target.value as PlatformKey)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
-                {platformOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
-              </select>
-              <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
-                {languageOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
-              </select>
-              {generationMode === "image_to_image" && referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
               {generationMode === "image_to_image" ? (
-                <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
-                  {isAnalyzing ? "填写中" : "自动填写下列信息"}
-                </button>
+                <>
+                  <select value={platform} onChange={(event) => setPlatform(event.target.value as PlatformKey)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
+                    {platformOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
+                  </select>
+                  <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
+                    {languageOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
+                  </select>
+                  {referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
+                  <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
+                    {isAnalyzing ? "填写中" : "自动填写下列信息"}
+                  </button>
+                </>
               ) : null}
               <button type="button" onClick={() => runGeneration(selectedTypes)} disabled={isLoading || isAnalyzing} className="ml-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-black shadow-lg transition hover:scale-105 disabled:opacity-50">
                 ↑
@@ -534,10 +536,7 @@ export default function WorkspacePage() {
             </div>
           </>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <FieldBlock label="主题/商品名">
-              <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="可选，例：可携式果汁机" className={inputClass} />
-            </FieldBlock>
+          <div>
             <div>
               <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
