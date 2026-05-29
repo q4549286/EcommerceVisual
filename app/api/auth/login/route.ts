@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         })
       : await loginWithPassword(String(body?.phone || ""), String(body?.password || ""));
     const response = isFormPost
-      ? NextResponse.redirect(new URL(appPath("/"), request.url), { status: 303 })
+      ? new NextResponse(null, { status: 303, headers: { Location: appPath("/") } })
       : NextResponse.json({ ok: true, user: result.user, nextUrl: appPath("/") });
     setSessionCookie(response, result.session.token, result.session.expiresAt);
     return response;
@@ -34,9 +34,8 @@ export async function POST(request: Request) {
     const status = error instanceof AuthError ? error.status : 500;
     const message = error instanceof Error ? error.message : "登录失败。";
     if (isFormPost) {
-      const redirectUrl = new URL(appPath("/login"), request.url);
-      redirectUrl.searchParams.set("error", message);
-      return NextResponse.redirect(redirectUrl, { status: 303 });
+      const redirectUrl = `${appPath("/login")}?error=${encodeURIComponent(message)}`;
+      return new NextResponse(null, { status: 303, headers: { Location: redirectUrl } });
     }
     return NextResponse.json({ ok: false, error: message }, { status });
   }
