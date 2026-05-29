@@ -13,9 +13,13 @@ function mimeFromFile(file: File) {
 }
 
 function languageName(language: Language) {
-  if (language === "zh-TW") return "Traditional Chinese";
-  if (language === "zh-CN") return "Simplified Chinese";
+  if (language === "zh-TW") return "繁體中文";
+  if (language === "zh-CN") return "简体中文";
   return "English";
+}
+
+function isChineseLanguage(language: Language) {
+  return language === "zh-CN" || language === "zh-TW";
 }
 
 function platformName(platform?: PlatformKey) {
@@ -95,6 +99,48 @@ function normalizeAnalysis(value: Record<string, unknown>): ProductAnalysis {
   };
 }
 
+function buildAnalysisPrompt(language: Language, platform?: PlatformKey) {
+  const outputLanguage = languageName(language);
+  const targetPlatform = platformName(platform);
+  const schema = `{
+  "productName": "short product name",
+  "category": "marketplace category",
+  "description": "one concise listing description",
+  "brand": "visible brand or empty string",
+  "material": "visible or likely material, cautious if inferred",
+  "size": "visible package/spec/volume/size or empty string",
+  "color": "main colors",
+  "audience": "target buyers or use scenario",
+  "sellingPoints": ["3-6 short selling points"],
+  "avoid": ["3-8 words or phrases"]
+}`;
+
+  if (isChineseLanguage(language)) {
+    return [
+      `你是熟悉中国电商平台的商品上架运营，目标平台：${targetPlatform}。`,
+      "请根据上传的商品图，识别并补全后续生成详情图需要的商品资料。只返回 JSON，不要解释。",
+      `所有面向用户的字段值都用${outputLanguage}。JSON 字段名必须保持英文。`,
+      "不要编造图片中看不出或无法谨慎推断的事实；不确定时用保守表达或留空。",
+      "请按旧版产品卖点结构理解信息：产品名、核心卖点、适用人群、期望场景、尺寸参数。",
+      "核心卖点要服务手机电商图生成：短、具体、能用于货架小图或详情首屏，不要写长句，不要写平台色引导。",
+      "avoid 字段列出生成时应该避开的风险词，例如：假价格、假折扣、医疗功效、伪造认证、二维码、电话号码、水印；只列与该商品相关的风险。",
+      "返回 JSON schema：",
+      schema
+    ].join("\n");
+  }
+
+  return [
+    `You are an experienced Chinese ecommerce product listing operator for ${targetPlatform}.`,
+    "Analyze the uploaded product image and infer useful listing information. Return JSON only.",
+    `Write all customer-facing values in ${outputLanguage}.`,
+    "Do not invent facts that are not visually supported. If uncertain, use cautious wording.",
+    "For sellingPoints, generate practical marketplace benefits based on visible product features, packaging, category, usage scenario, and Chinese platform conversion style.",
+    "For avoid, list risky generation words to avoid, such as fake price, fake discount, medical claim, fake certification, QR code, phone number, watermark, if relevant.",
+    "JSON schema:",
+    schema
+  ].join("\n");
+}
+
 export async function analyzeProductImage(file: File, language: Language, platform?: PlatformKey) {
   const settings = await getImageApiSettings(true);
   const baseUrl = settings.baseUrl.replace(/\/$/, "");
@@ -107,30 +153,7 @@ export async function analyzeProductImage(file: File, language: Language, platfo
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const dataUrl = `data:${mimeFromFile(file)};base64,${bytes.toString("base64")}`;
-  const outputLanguage = languageName(language);
-  const targetPlatform = platformName(platform);
-
-  const prompt = [
-    `You are an experienced Chinese ecommerce product listing operator for ${targetPlatform}.`,
-    "Analyze the uploaded product image and infer useful listing information. Return JSON only.",
-    `Write all customer-facing values in ${outputLanguage}.`,
-    "Do not invent facts that are not visually supported. If uncertain, use cautious wording.",
-    "For sellingPoints, generate practical marketplace benefits based on visible product features, packaging, category, usage scenario, and Chinese platform conversion style.",
-    "For avoid, list risky generation words to avoid, such as fake price, fake discount, medical claim, fake certification, QR code, phone number, watermark, if relevant.",
-    "JSON schema:",
-    `{
-  "productName": "short product name",
-  "category": "marketplace category",
-  "description": "one concise listing description",
-  "brand": "visible brand or empty string",
-  "material": "visible or likely material, cautious if inferred",
-  "size": "visible package/spec/volume/size or empty string",
-  "color": "main colors",
-  "audience": "target buyers or use scenario",
-  "sellingPoints": ["3-6 short selling points"],
-  "avoid": ["3-8 words or phrases"]
-}`
-  ].join("\n");
+  const prompt = buildAnalysisPrompt(language, platform);
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
