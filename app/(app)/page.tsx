@@ -479,9 +479,8 @@ export default function WorkspacePage() {
         {error ? <div className="mt-3 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
       </section>
 
-      <section className="mx-auto mt-5 max-w-4xl rounded-[24px] border border-white/[0.08] bg-white/5 p-4 backdrop-blur">
-        {generationMode === "image_to_image" ? (
-          <>
+      {generationMode === "image_to_image" ? (
+        <section className="mx-auto mt-5 max-w-4xl rounded-[24px] border border-white/[0.08] bg-white/5 p-4 backdrop-blur">
             <div className="mb-4 text-xs font-medium text-white/[0.48]">商品资料</div>
             <div className="grid gap-3 md:grid-cols-3">
               <FieldBlock label="产品名">
@@ -530,9 +529,8 @@ export default function WorkspacePage() {
                 </div>
               </div>
             </div>
-          </>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
 
       {plans.length > 0 ? (
         <section className="mt-10">
