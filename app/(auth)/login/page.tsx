@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CSSProperties, FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Buttons";
 import { useUserSession } from "@/components/UserSession";
@@ -9,6 +9,7 @@ import { apiFetch, appPath } from "@/lib/client-api";
 import type { AuthUser } from "@/lib/types";
 
 export default function LoginPage() {
+  const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "";
   const { setUser } = useUserSession();
@@ -34,7 +35,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const data = await apiFetch<{ user: AuthUser; nextUrl?: string }>("/api/auth/login", {
+      const data = await apiFetch<{ user: AuthUser }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({
           imageApi: {
@@ -45,7 +46,7 @@ export default function LoginPage() {
         })
       });
       setUser(data.user);
-      window.location.assign(data.nextUrl || appPath(next || "/"));
+      window.location.href = appPath(next || "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "保存 API 配置失败。");
     } finally {
