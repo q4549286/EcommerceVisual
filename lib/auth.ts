@@ -12,6 +12,7 @@ const SESSION_COOKIE = "ecv_session";
 const SESSION_DAYS = 30;
 const API_WORKSPACE_PHONE = "api-manager";
 const API_WORKSPACE_CREDITS = 1_000_000;
+const COOKIE_SECURE = process.env.COOKIE_SECURE === "false" ? false : process.env.NODE_ENV === "production";
 
 export class AuthError extends Error {
   status: number;
@@ -132,31 +133,21 @@ export async function createSession(userId: string) {
   return { token, expiresAt };
 }
 
-export function secureCookieForRequest(request: Request) {
-  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  if (forwardedProto) return forwardedProto === "https";
-  try {
-    return new URL(request.url).protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
-export function setSessionCookie(response: NextResponse, token: string, expiresAt: Date, secure = false) {
+export function setSessionCookie(response: NextResponse, token: string, expiresAt: Date) {
   response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure,
+    secure: COOKIE_SECURE,
     path: "/",
     expires: expiresAt
   });
 }
 
-export function clearSessionCookie(response: NextResponse, secure = false) {
+export function clearSessionCookie(response: NextResponse) {
   response.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure,
+    secure: COOKIE_SECURE,
     path: "/",
     maxAge: 0
   });

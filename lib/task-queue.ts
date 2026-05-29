@@ -126,10 +126,17 @@ export async function listUserTasks(userId: string, limit = 20) {
 
 async function claimTask(taskId: string) {
   const claimed = await prisma.generationTask.updateMany({
-    where: { id: taskId, status: "PENDING" },
+    where: {
+      id: taskId,
+      status: {
+        in: ["PENDING", "RUNNING"]
+      }
+    },
     data: {
       status: "RUNNING",
       startedAt: new Date(),
+      finishedAt: null,
+      error: null,
       message: "准备生成",
       progress: 0
     }
@@ -141,6 +148,29 @@ export async function enqueueTask(taskId: string) {
   if (runningTasks.has(taskId) || queuedTaskIds.includes(taskId)) return;
   queuedTaskIds.push(taskId);
   void drainQueue();
+}
+
+export async function resumeIncompleteTasks(userId?: string) {
+  const staleBefore = new Date(Date.now() - 2 * 60 * 1000);
+  const tasks = await prisma.generationTask.findMany({
+    where: {
+      ...(userId ? { userId } : {}),
+      status: {
+        in: ["PENDING", "RUNNING"]
+      },
+      OR: [
+        { status: "PENDING" },
+        { updatedAt: { lt: staleBefore } }
+      ]
+    },
+    orderBy: { createdAt: "asc" },
+    take: 10,
+    select: { id: true }
+  });
+
+  for (const task of tasks) {
+    await enqueueTask(task.id);
+  }
 }
 
 async function drainQueue() {

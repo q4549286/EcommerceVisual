@@ -52,9 +52,47 @@ export async function assetToFile(asset: { name?: string; type?: string; base64:
   return new File([bytes], asset.name || "image.png", { type: asset.type || "image/png" });
 }
 
+async function generationNetCharge(generationId: string) {
+  const rows = await prisma.creditRecord.findMany({
+    where: { generationId },
+    select: { amount: true }
+  });
+  return Math.max(0, -rows.reduce((sum, row) => sum + row.amount, 0));
+}
+
+async function reconcileGenerationCredits(userId: string, generationId: string, successCount: number, note: string) {
+  const netCharge = await generationNetCharge(generationId);
+  const refundCount = Math.max(0, netCharge - successCount);
+  if (refundCount > 0) {
+    await refundGenerationCredits(userId, generationId, refundCount, note);
+  }
+}
+
+async function saveGenerationImageResult(generationId: string, plan: ImagePlan) {
+  await prisma.generationImage.deleteMany({
+    where: {
+      generationId,
+      type: plan.type
+    }
+  });
+
+  await prisma.generationImage.create({
+    data: {
+      generationId,
+      type: plan.type,
+      title: plan.title,
+      size: plan.size,
+      ok: Boolean(plan.imageUrl),
+      imageUrl: plan.imageUrl,
+      error: plan.error
+    }
+  });
+}
+
 export async function runGeneration(input: GenerationRunInput): Promise<GenerationRunResult> {
   let generationId = input.existingGenerationId || "";
-  let reservedCount = 0;
+  const generatedPlans: ImagePlan[] = [];
+  const logs: CallLog[] = [];
 
   try {
     const plans = buildImagePlans(input.input);
@@ -80,16 +118,46 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
     }
 
     generationId = generation.id;
-    await reserveGenerationCredits(input.userId, generationId, plans.length, `生成图片预扣：${input.input.productName.trim()}`);
-    reservedCount = plans.length;
+    if (input.taskId && !input.existingGenerationId) {
+      await prisma.generationTask.update({
+        where: { id: input.taskId },
+        data: { generationId }
+      }).catch(() => undefined);
+    }
 
-    const generatedPlans: ImagePlan[] = [];
-    const logs: CallLog[] = [];
+    const existingImages = await prisma.generationImage.findMany({
+      where: { generationId },
+      orderBy: { createdAt: "asc" }
+    });
+    const completedByType = new Map(
+      existingImages
+        .filter((image) => image.ok && image.imageUrl)
+        .map((image) => [image.type, image])
+    );
+    const remainingCount = plans.filter((plan) => !completedByType.has(plan.type)).length;
+    const reserveCount = Math.max(0, plans.length - await generationNetCharge(generationId));
+    if (reserveCount > 0 && remainingCount > 0) {
+      await reserveGenerationCredits(input.userId, generationId, Math.min(reserveCount, remainingCount), `生成图片预扣：${input.input.productName.trim()}`);
+    }
+
     const productImageFile = isTextToImage || !input.productImage ? null : input.productImage;
     const referenceImages = input.referenceImages || [];
 
     for (let index = 0; index < plans.length; index += 1) {
       const plan = plans[index];
+      const completed = completedByType.get(plan.type);
+      if (completed?.imageUrl) {
+        generatedPlans.push({ ...plan, imageUrl: completed.imageUrl });
+        await prisma.generationTask.updateMany({
+          where: input.taskId ? { id: input.taskId } : { generationId, status: "RUNNING" },
+          data: {
+            progress: Math.min(99, Math.round(((index + 1) / plans.length) * 100)),
+            message: `已跳过 ${index + 1}/${plans.length}，继续补剩余图片`
+          }
+        }).catch(() => undefined);
+        continue;
+      }
+
       await input.onProgress?.({
         index,
         total: plans.length,
@@ -109,6 +177,7 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
       } else {
         generatedPlans.push({ ...plan, error: result.error });
       }
+      await saveGenerationImageResult(generationId, generatedPlans[generatedPlans.length - 1]);
 
       await prisma.generationTask.updateMany({
         where: input.taskId ? { id: input.taskId } : { generationId, status: "RUNNING" },
@@ -122,10 +191,7 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
     const successCount = generatedPlans.filter((plan) => Boolean(plan.imageUrl)).length;
     const failCount = generatedPlans.length - successCount;
 
-    if (failCount > 0) {
-      await refundGenerationCredits(input.userId, generationId, failCount, `生成失败退回：${input.input.productName.trim()}`);
-      reservedCount -= failCount;
-    }
+    await reconcileGenerationCredits(input.userId, generationId, successCount, `生成失败退回：${input.input.productName.trim()}`);
 
     await prisma.generation.update({
       where: { id: generationId },
@@ -134,18 +200,6 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
         failCount,
         creditsCharged: successCount
       }
-    });
-
-    await prisma.generationImage.createMany({
-      data: generatedPlans.map((plan) => ({
-        generationId,
-        type: plan.type,
-        title: plan.title,
-        size: plan.size,
-        ok: Boolean(plan.imageUrl),
-        imageUrl: plan.imageUrl,
-        error: plan.error
-      }))
     });
 
     const currentUser = await prisma.user.findUnique({
@@ -171,14 +225,20 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
 
     return { ok: true, generationId, plans: generatedPlans, logs, credits: currentUser?.credits };
   } catch (error) {
-    if (generationId && reservedCount > 0) {
-      await refundGenerationCredits(input.userId, generationId, reservedCount, "生成异常退回").catch(() => undefined);
+    if (generationId) {
+      const images = await prisma.generationImage.findMany({
+        where: { generationId },
+        select: { ok: true }
+      }).catch(() => []);
+      const successCount = images.filter((image) => image.ok).length;
+      const plannedCount = buildImagePlans(input.input).length;
+      await reconcileGenerationCredits(input.userId, generationId, successCount, "生成异常退回").catch(() => undefined);
       await prisma.generation.update({
         where: { id: generationId },
         data: {
-          successCount: 0,
-          failCount: reservedCount,
-          creditsCharged: 0
+          successCount,
+          failCount: Math.max(0, plannedCount - successCount),
+          creditsCharged: successCount
         }
       }).catch(() => undefined);
     }
@@ -204,7 +264,7 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
       action: "image.generate_error",
       message
     });
-    return { ok: false, generationId, plans: [], logs: [], error: message };
+    return { ok: false, generationId, plans: generatedPlans, logs, error: message };
   }
 }
 

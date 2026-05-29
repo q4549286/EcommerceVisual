@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { AuthError, requireUser } from "@/lib/auth";
 import { CreditError } from "@/lib/credits";
 import { buildImagePlans } from "@/lib/plans";
-import { createGenerationTask, listUserTasks } from "@/lib/task-queue";
+import { createGenerationTask, listUserTasks, resumeIncompleteTasks } from "@/lib/task-queue";
 import type { ProductInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const user = await requireUser(request);
     const url = new URL(request.url);
     const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") || 20)));
+    await resumeIncompleteTasks(user.id);
     const items = await listUserTasks(user.id, limit);
     return NextResponse.json({ ok: true, items });
   } catch (error) {

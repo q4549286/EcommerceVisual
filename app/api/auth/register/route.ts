@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AuthError, registerWithPassword, secureCookieForRequest, setSessionCookie } from "@/lib/auth";
+import { AuthError, registerWithPassword, setSessionCookie } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const result = await registerWithPassword(String(body?.phone || ""), String(body?.password || ""));
     const response = NextResponse.json({ ok: true, user: result.user });
-    setSessionCookie(response, result.session.token, result.session.expiresAt, secureCookieForRequest(request));
+    setSessionCookie(response, result.session.token, result.session.expiresAt);
     return response;
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 500;

@@ -2,6 +2,7 @@ import type { CallLog, ImagePlan } from "./types";
 import { getImageApiSettings } from "@/lib/settings";
 
 const MAX_RETRIES = 2;
+const IMAGE_API_TIMEOUT_MS = Number(process.env.IMAGE_API_TIMEOUT_MS || 240_000);
 
 export type ImageCallResult =
   | { ok: true; imageUrl: string; log: CallLog }
@@ -82,18 +83,43 @@ async function parseImageResponse(response: Response) {
   throw new Error("Image API response did not include b64_json or url.");
 }
 
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), IMAGE_API_TIMEOUT_MS);
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function requestWithRetry(url: string, init: RequestInit) {
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
     try {
-      const response = await fetch(url, init);
+      const response = await fetchWithTimeout(url, init);
       if ([429, 500, 502, 503, 504].includes(response.status) && attempt < MAX_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
         continue;
       }
       return response;
     } catch (error) {
+      if (isAbortError(error)) {
+        lastError = new Error(`Image API request timed out after ${Math.round(IMAGE_API_TIMEOUT_MS / 1000)}s.`);
+        if (attempt < MAX_RETRIES) {
+          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
+          continue;
+        }
+        throw lastError;
+      }
       lastError = error;
       if (attempt < MAX_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
