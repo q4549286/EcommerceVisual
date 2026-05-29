@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { ChangeEvent, DragEvent, ReactNode, useEffect, useRef, useState } from "react";
-import { apiFetch } from "@/lib/client-api";
+import { apiFetch, appPath } from "@/lib/client-api";
 import { useToast } from "@/components/ui/Toast";
 import { Drawer } from "@/components/ui/Drawer";
 import { useUserSession } from "@/components/UserSession";
@@ -314,7 +314,7 @@ export default function WorkspacePage() {
     formData.append("input", JSON.stringify(input));
 
     try {
-      const response = await fetch("/api/tasks", {
+      const response = await fetch(appPath("/api/tasks"), {
         method: "POST",
         body: formData
       });
@@ -360,7 +360,7 @@ export default function WorkspacePage() {
     formData.append("platform", platform);
 
     try {
-      const response = await fetch("/api/analyze-product", { method: "POST", body: formData });
+      const response = await fetch(appPath("/api/analyze-product"), { method: "POST", body: formData });
       const data: { ok: boolean; analysis?: ProductAnalysis; error?: string } = await response.json();
       if (!data.ok || !data.analysis) throw new Error(data.error || "商品识别失败。");
       applyAnalysis(data.analysis);
@@ -569,7 +569,7 @@ export default function WorkspacePage() {
               <article key={plan.type} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.06]">
                 <div className="aspect-[4/5] bg-white/5">
                   {plan.imageUrl ? (
-                    <img src={plan.imageUrl} alt={plan.title} onClick={() => setLightboxPlan(plan)} className="h-full w-full cursor-zoom-in object-cover" />
+                    <img src={appPath(plan.imageUrl)} alt={plan.title} onClick={() => setLightboxPlan(plan)} className="h-full w-full cursor-zoom-in object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center px-4 text-center text-sm text-white/[0.45]">{plan.error || "未生成"}</div>
                   )}
@@ -579,7 +579,7 @@ export default function WorkspacePage() {
                   <div className="mt-1 text-xs text-white/[0.35]">{plan.size}</div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => copyText(plan.prompt)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/[0.65] hover:bg-white/10">复制提示词</button>
-                    {plan.imageUrl ? <a href={plan.imageUrl} download={`${plan.type}.png`} className="rounded-full bg-white px-3 py-1.5 text-xs text-black">下载</a> : null}
+                    {plan.imageUrl ? <a href={appPath(plan.imageUrl)} download={`${plan.type}.png`} className="rounded-full bg-white px-3 py-1.5 text-xs text-black">下载</a> : null}
                     <button onClick={() => void submitTask([plan.type])} disabled={isAnalyzing || isSubmitting} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/[0.65] hover:bg-white/10">重做</button>
                   </div>
                 </div>
@@ -592,7 +592,7 @@ export default function WorkspacePage() {
       {lightboxPlan?.imageUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6" onClick={() => setLightboxPlan(null)}>
           <button type="button" onClick={() => setLightboxPlan(null)} className="absolute right-5 top-5 z-10 rounded-full bg-white px-4 py-2 text-sm text-black">关闭</button>
-          <img src={lightboxPlan.imageUrl} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />
+          <img src={appPath(lightboxPlan.imageUrl)} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />
         </div>
       ) : null}
 
@@ -631,7 +631,7 @@ export default function WorkspacePage() {
                     <div className="mt-3 grid grid-cols-5 gap-2">
                       {taskPlansList.slice(0, 5).map((plan) => (
                         <div key={`${task.id}-${plan.type}`} className="aspect-square overflow-hidden rounded-xl bg-slate-100">
-                          {plan.imageUrl ? <img src={plan.imageUrl} alt={plan.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-2 text-[11px] text-slate-400">{plan.error || "未出图"}</div>}
+                          {plan.imageUrl ? <img src={appPath(plan.imageUrl)} alt={plan.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-2 text-[11px] text-slate-400">{plan.error || "未出图"}</div>}
                         </div>
                       ))}
                     </div>

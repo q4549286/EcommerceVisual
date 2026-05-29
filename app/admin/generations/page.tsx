@@ -8,7 +8,7 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Select, TextInput } from "@/components/ui/FormField";
 import { Tag } from "@/components/ui/Tag";
 import { useToast } from "@/components/ui/Toast";
-import { apiFetch } from "@/lib/client-api";
+import { apiFetch, appPath } from "@/lib/client-api";
 import { formatDateTime } from "@/lib/format";
 
 type GenerationItem = {
@@ -164,7 +164,7 @@ export default function AdminGenerationsPage() {
                 {active.images.map((image) => (
                   <div key={image.id} className="overflow-hidden rounded border border-slate-200">
                     <div className="aspect-square bg-slate-50">
-                      {image.imageUrl ? <img src={image.imageUrl} alt={image.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-3 text-center text-xs text-slate-400">{image.error || "未生成"}</div>}
+                      {image.imageUrl ? <img src={appPath(image.imageUrl)} alt={image.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center px-3 text-center text-xs text-slate-400">{image.error || "未生成"}</div>}
                     </div>
                     <div className="p-2 text-xs">
                       <div className="flex items-center justify-between">
