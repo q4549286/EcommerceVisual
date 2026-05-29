@@ -181,3 +181,64 @@ The first uploaded image is the product image and must define the real SKU. The 
     };
   }
 }
+
+export async function generateTextImage(plan: ImagePlan): Promise<ImageCallResult> {
+  const startedAt = Date.now();
+  const normalizedSize = normalizeSize(plan.size);
+  const config = await imageApiConfig();
+  const endpointUrl = config.baseUrl ? `${config.baseUrl}/images/generations` : "";
+  const modelName = config.model;
+
+  const baseLog = {
+    id: newId(),
+    timestamp: startedAt,
+    endpoint: endpointUrl,
+    model: modelName,
+    imageType: plan.type,
+    size: normalizedSize
+  };
+
+  if (!config.baseUrl || !config.apiKey || !config.model) {
+    const message = "图像生成接口配置不完整，请在管理后台系统设置中填写 IMAGE_API_BASE、IMAGE_API_KEY 和 IMAGE_MODEL。";
+    return {
+      ok: false,
+      error: message,
+      log: { ...baseLog, status: 0, durationMs: 0, ok: false, error: message }
+    };
+  }
+
+  let status = 0;
+  try {
+    const response = await requestWithRetry(endpointUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+        "X-Client-Request-Id": newId()
+      },
+      body: JSON.stringify({
+        model: modelName,
+        prompt: plan.prompt,
+        size: normalizedSize,
+        quality: "medium",
+        n: 1,
+        output_format: "png",
+        response_format: "b64_json"
+      })
+    });
+    status = response.status;
+    const imageUrl = await parseImageResponse(response);
+    return {
+      ok: true,
+      imageUrl,
+      log: { ...baseLog, status, durationMs: Date.now() - startedAt, ok: true }
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "图片生成失败。";
+    return {
+      ok: false,
+      error: message,
+      log: { ...baseLog, status, durationMs: Date.now() - startedAt, ok: false, error: message }
+    };
+  }
+}

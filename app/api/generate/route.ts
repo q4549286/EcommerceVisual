@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { AuthError, requireUser } from "@/lib/auth";
 import { CreditError, refundGenerationCredits, reserveGenerationCredits } from "@/lib/credits";
-import { generateEditedImage } from "@/lib/image-api";
+import { generateEditedImage, generateTextImage } from "@/lib/image-api";
 import { persistGeneratedImageUrl } from "@/lib/image-storage";
 import { buildImagePlans } from "@/lib/plans";
 import { prisma } from "@/lib/prisma";
@@ -28,17 +28,18 @@ export async function POST(request: Request) {
     const referenceImages = formData.getAll("referenceImages").filter((item): item is File => item instanceof File && item.size > 0).slice(0, 6);
     const rawInput = formData.get("input");
 
-    if (!(image instanceof File)) {
-      return badRequest("请上传商品图。");
-    }
-
     if (typeof rawInput !== "string") {
       return badRequest("缺少生成参数。");
     }
 
     const input = JSON.parse(rawInput) as ProductInput;
+    const isTextToImage = input.generationMode === "text_to_image";
+    if (!isTextToImage && !(image instanceof File)) {
+      return badRequest("请上传商品图。");
+    }
     if (!input.productName?.trim()) {
-      return badRequest("请填写商品名称。");
+      if (isTextToImage && input.description?.trim()) input.productName = "文生图";
+      else return badRequest("请填写商品名称。");
     }
 
     const plans = buildImagePlans(input);
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
     reservedCount = plans.length;
 
     for (const plan of plans) {
-      const result = await generateEditedImage(plan, image, referenceImages);
+      const result = isTextToImage ? await generateTextImage(plan) : await generateEditedImage(plan, image as File, referenceImages);
       logs.push(result.log);
       await writeApiLog(user.id, "image.generate", result.log);
       if (result.ok) {

@@ -5,7 +5,7 @@ import { ChangeEvent, DragEvent, ReactNode, useEffect, useRef, useState } from "
 import { useToast } from "@/components/ui/Toast";
 import { useUserSession } from "@/components/UserSession";
 import { buildImagePlans, imageTypeOptions } from "@/lib/plans";
-import type { GenerateResponse, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput } from "@/lib/types";
+import type { GenerateResponse, GenerationMode, HistoryEntry, ImagePlan, ImageTypeKey, Language, ListingIntent, PlatformKey, ProductAnalysis, ProductInput } from "@/lib/types";
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
@@ -127,6 +127,7 @@ export default function WorkspacePage() {
   const { show } = useToast();
 
   const [productImage, setProductImage] = useState<File | null>(null);
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("image_to_image");
   const [previewUrl, setPreviewUrl] = useState("");
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [referencePreviewUrls, setReferencePreviewUrls] = useState<string[]>([]);
@@ -223,8 +224,10 @@ export default function WorkspacePage() {
   }
 
   function buildInput(imageTypes = selectedTypes): ProductInput {
+    const fallbackName = generationMode === "text_to_image" ? "文生图" : "";
     return {
-      productName,
+      productName: productName.trim() || fallbackName,
+      generationMode,
       platform,
       listingIntent,
       category,
@@ -243,8 +246,9 @@ export default function WorkspacePage() {
 
   function validate(imageTypes = selectedTypes) {
     if (!user) return "请先进入 API 管理模式。";
-    if (!productImage) return "请先上传商品图。";
-    if (!productName.trim()) return "请填写商品名称。";
+    if (generationMode === "image_to_image" && !productImage) return "请先上传商品图。";
+    if (generationMode === "image_to_image" && !productName.trim()) return "请填写商品名称。";
+    if (generationMode === "text_to_image" && !productName.trim() && !description.trim()) return "请写一句想生成的商品图描述。";
     if (imageTypes.length === 0) return "请至少选择一种图片类型。";
     if (user.credits < imageTypes.length) return `额度不足，本次需要 ${imageTypes.length} 点。`;
     return "";
@@ -302,9 +306,11 @@ export default function WorkspacePage() {
     startProgress(["连接生图接口", ...draftPlans.map((p) => `生成 ${p.title}`)]);
 
     const formData = new FormData();
-    formData.append("productImage", productImage as File);
-    for (const referenceImage of referenceImages) {
-      formData.append("referenceImages", referenceImage);
+    if (generationMode === "image_to_image" && productImage) {
+      formData.append("productImage", productImage);
+      for (const referenceImage of referenceImages) {
+        formData.append("referenceImages", referenceImage);
+      }
     }
     formData.append("input", JSON.stringify(input));
     abortRef.current = new AbortController();
@@ -338,7 +344,7 @@ export default function WorkspacePage() {
       persistHistory({
         id: data.generationId || newId(),
         timestamp: Date.now(),
-        productName: mode === "replace" ? `${productName || "未命名"}（重新生成）` : productName,
+        productName: mode === "replace" ? `${input.productName || "未命名"}（重新生成）` : input.productName,
         language,
         imageCount: resultPlans.length,
         successCount,
@@ -447,10 +453,20 @@ export default function WorkspacePage() {
 
       <section className="mx-auto mt-12 max-w-4xl rounded-[30px] border border-white/[0.12] bg-black/[0.52] p-3 shadow-2xl shadow-black/[0.45] backdrop-blur-xl">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {["对话", "快速", "电商套图 Agent"].map((item, index) => (
-            <button key={item} className={`relative rounded-full px-5 py-2 text-sm ${index === 0 ? "bg-white text-black" : "border border-white/10 bg-white/[0.08] text-white/[0.62]"}`}>
-              {item}
-              {index === 2 ? <span className="absolute -right-2 -top-3 rotate-[-12deg] text-[11px] font-semibold text-white">new</span> : null}
+          {[
+            { label: "图生图", value: "image_to_image" as GenerationMode },
+            { label: "文生图", value: "text_to_image" as GenerationMode }
+          ].map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => {
+                setGenerationMode(item.value);
+                setError("");
+              }}
+              className={`rounded-full px-5 py-2 text-sm transition ${generationMode === item.value ? "bg-white text-black" : "border border-white/10 bg-white/[0.08] text-white/[0.62] hover:bg-white/[0.12]"}`}
+            >
+              {item.label}
             </button>
           ))}
         </div>
@@ -471,9 +487,10 @@ export default function WorkspacePage() {
 
         <div
           onDragOver={(event) => event.preventDefault()}
-          onDrop={onDrop}
-          className="grid min-h-[230px] grid-cols-1 gap-4 rounded-[24px] border border-white/[0.08] bg-[#080808]/90 p-4 sm:grid-cols-[260px_minmax(0,1fr)]"
+          onDrop={generationMode === "image_to_image" ? onDrop : undefined}
+          className={`grid min-h-[230px] grid-cols-1 gap-4 rounded-[24px] border border-white/[0.08] bg-[#080808]/90 p-4 ${generationMode === "image_to_image" ? "sm:grid-cols-[260px_minmax(0,1fr)]" : ""}`}
         >
+          {generationMode === "image_to_image" ? (
           <div className="grid grid-cols-2 gap-4 border-white/10 sm:border-r sm:pr-4">
             <button
               type="button"
@@ -500,12 +517,13 @@ export default function WorkspacePage() {
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
             <input ref={referenceInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={onReferenceChange} className="hidden" />
           </div>
+          ) : null}
 
           <div className="flex min-w-0 flex-col gap-3">
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="试试输入：把照片上的果汁替换成可乐，或生成一套手机端详情图"
+              placeholder={generationMode === "image_to_image" ? "试试输入：把照片上的果汁替换成可乐，或生成一套手机端详情图" : "直接描述要生成的电商图片：例如 便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架"}
               className="min-h-[110px] flex-1 resize-none border-0 bg-transparent p-1 text-base leading-7 text-white outline-none placeholder:text-white/[0.32]"
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -515,10 +533,12 @@ export default function WorkspacePage() {
               <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
                 {languageOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
               </select>
-              {referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
-              <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
-                {isAnalyzing ? "识别中" : "自动识别"}
-              </button>
+              {generationMode === "image_to_image" && referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
+              {generationMode === "image_to_image" ? (
+                <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isLoading || !productImage} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
+                  {isAnalyzing ? "识别中" : "自动识别"}
+                </button>
+              ) : null}
               <button type="button" onClick={() => runGeneration(selectedTypes)} disabled={isLoading || isAnalyzing} className="ml-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-black shadow-lg transition hover:scale-105 disabled:opacity-50">
                 ↑
               </button>
@@ -531,8 +551,8 @@ export default function WorkspacePage() {
 
       <section className="mx-auto mt-5 max-w-4xl rounded-[24px] border border-white/[0.08] bg-white/5 p-4 backdrop-blur">
         <div className="grid gap-3 md:grid-cols-3">
-          <FieldBlock label="产品名">
-            <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="例：可携式果汁机" className={inputClass} />
+          <FieldBlock label={generationMode === "text_to_image" ? "主题/商品名" : "产品名"}>
+            <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder={generationMode === "text_to_image" ? "可选，例：可携式果汁机" : "例：可携式果汁机"} className={inputClass} />
           </FieldBlock>
           <FieldBlock label="运营场景">
             <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={inputClass}>

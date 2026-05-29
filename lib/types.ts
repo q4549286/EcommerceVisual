@@ -12,6 +12,8 @@ export type PlatformKey =
 
 export type ListingIntent = "new_listing" | "refresh_listing" | "delist_clearance" | "sold_out_pause";
 
+export type GenerationMode = "image_to_image" | "text_to_image";
+
 export type ImageTypeKey =
   | "main_white_bg"
   | "platform_listing"
@@ -23,6 +25,7 @@ export type ImageTypeKey =
 
 export type ProductInput = {
   productName: string;
+  generationMode?: GenerationMode;
   platform?: PlatformKey;
   listingIntent?: ListingIntent;
   category?: string;
