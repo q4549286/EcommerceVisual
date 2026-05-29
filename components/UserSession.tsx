@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import { appPath } from "@/lib/client-api";
 import type { AuthUser } from "@/lib/types";
 
 type Ctx = {
@@ -26,7 +25,7 @@ export function UserSessionProvider({
 
   const refresh = useCallback(async () => {
     try {
-      const response = await fetch(appPath("/api/auth/me"), { cache: "no-store" });
+      const response = await fetch("/api/auth/me", { cache: "no-store" });
       const data = await response.json();
       setUser(data.user || null);
     } catch {
@@ -37,10 +36,10 @@ export function UserSessionProvider({
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch(appPath("/api/auth/logout"), { method: "POST" }).catch(() => undefined);
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
     setUser(null);
     if (typeof window !== "undefined") {
-      window.location.href = appPath("/login");
+      window.location.href = "/login";
     }
   }, []);
 

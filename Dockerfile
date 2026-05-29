@@ -1,5 +1,4 @@
 ARG NODE_IMAGE=node:22-bookworm-slim
-ARG NEXT_PUBLIC_BASE_PATH=""
 
 FROM ${NODE_IMAGE} AS deps
 WORKDIR /app
@@ -13,8 +12,6 @@ WORKDIR /app
 ENV HTTP_PROXY="" HTTPS_PROXY="" ALL_PROXY="" http_proxy="" https_proxy="" all_proxy="" NO_PROXY="*" no_proxy="*"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
-ARG NEXT_PUBLIC_BASE_PATH
-ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx --yes prisma generate

@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Tag } from "@/components/ui/Tag";
 import { TextInput } from "@/components/ui/FormField";
 import { useToast } from "@/components/ui/Toast";
-import { apiFetch, appPath } from "@/lib/client-api";
+import { apiFetch } from "@/lib/client-api";
 import { formatRelative } from "@/lib/format";
 import type { HistoryEntry, ImagePlan } from "@/lib/types";
 
@@ -127,7 +127,7 @@ export default function HistoryPage() {
             return (
               <article key={entry.id} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-50">
-                  {thumb ? <img src={appPath(thumb)} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[10px] text-slate-400">无图</div>}
+                  {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[10px] text-slate-400">无图</div>}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function HistoryPage() {
                 <div className="aspect-video bg-slate-50">
                   {plan.imageUrl ? (
                     <button type="button" onClick={() => setPreview(plan)} className="h-full w-full cursor-zoom-in">
-                      <img src={appPath(plan.imageUrl)} alt={plan.title} className="h-full w-full object-cover transition-transform hover:scale-[1.02]" />
+                      <img src={plan.imageUrl} alt={plan.title} className="h-full w-full object-cover transition-transform hover:scale-[1.02]" />
                     </button>
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs text-slate-400">{plan.error || "未生成"}</div>
@@ -169,7 +169,7 @@ export default function HistoryPage() {
                       <div className="text-slate-500">{plan.size}</div>
                     </div>
                     {plan.imageUrl ? (
-                      <a href={appPath(plan.imageUrl)} download={`${plan.type}.png`} className="rounded bg-slate-900 px-2.5 py-1 text-xs text-white hover:bg-black">
+                      <a href={plan.imageUrl} download={`${plan.type}.png`} className="rounded bg-slate-900 px-2.5 py-1 text-xs text-white hover:bg-black">
                         下载
                       </a>
                     ) : null}
@@ -195,10 +195,10 @@ export default function HistoryPage() {
             >
               关闭
             </button>
-            <img src={appPath(preview.imageUrl)} alt={preview.title} className="max-h-[88vh] max-w-full rounded bg-white object-contain shadow-2xl" />
+            <img src={preview.imageUrl} alt={preview.title} className="max-h-[88vh] max-w-full rounded bg-white object-contain shadow-2xl" />
             <div className="mt-3 flex items-center justify-between gap-3 rounded bg-white px-3 py-2 text-xs">
               <span className="font-medium text-slate-900">{preview.title}</span>
-              <a href={appPath(preview.imageUrl)} download={`${preview.type}.png`} className="rounded bg-slate-900 px-3 py-1.5 text-white hover:bg-black">
+              <a href={preview.imageUrl} download={`${preview.type}.png`} className="rounded bg-slate-900 px-3 py-1.5 text-white hover:bg-black">
                 下载
               </a>
             </div>
