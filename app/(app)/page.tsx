@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, DragEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { useUserSession } from "@/components/UserSession";
 import { buildImagePlans, imageTypeOptions } from "@/lib/plans";
@@ -9,6 +9,7 @@ import type { GenerateResponse, GenerationMode, HistoryEntry, ImagePlan, ImageTy
 
 const HISTORY_KEY = "ecv:history";
 const HISTORY_LIMIT = 10;
+const QUICK_FEATURE_USAGE_KEY = "ecv:quick-feature-usage";
 
 const languageOptions: { value: Language; label: string }[] = [
   { value: "zh-CN", label: "简体中文" },
@@ -155,6 +156,16 @@ export default function WorkspacePage() {
   const [lightboxPlan, setLightboxPlan] = useState<ImagePlan | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
+  const [quickFeatureUsage, setQuickFeatureUsage] = useState<Record<string, number>>({});
+
+  const sortedQuickFeaturePresets = useMemo(() => {
+    const originalOrder = new Map(quickFeaturePresets.map((item, index) => [item.title, index]));
+    return [...quickFeaturePresets].sort((a, b) => {
+      const countDiff = (quickFeatureUsage[b.title] || 0) - (quickFeatureUsage[a.title] || 0);
+      if (countDiff !== 0) return countDiff;
+      return (originalOrder.get(a.title) || 0) - (originalOrder.get(b.title) || 0);
+    });
+  }, [quickFeatureUsage]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -162,6 +173,10 @@ export default function WorkspacePage() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    setQuickFeatureUsage(loadJSON<Record<string, number>>(QUICK_FEATURE_USAGE_KEY, {}));
   }, []);
 
   function openFileDialog() {
@@ -219,6 +234,11 @@ export default function WorkspacePage() {
   function applyQuickFeature(preset: typeof quickFeaturePresets[number]) {
     setSelectedTypes(preset.imageTypes);
     setDescription(preset.description);
+    setQuickFeatureUsage((current) => {
+      const next = { ...current, [preset.title]: (current[preset.title] || 0) + 1 };
+      window.localStorage.setItem(QUICK_FEATURE_USAGE_KEY, JSON.stringify(next));
+      return next;
+    });
     setError("");
     show(`已切换到「${preset.title}」`, "info");
   }
@@ -454,7 +474,7 @@ export default function WorkspacePage() {
       <section className="mx-auto mt-12 max-w-4xl rounded-[30px] border border-white/[0.12] bg-black/[0.52] p-3 shadow-2xl shadow-black/[0.45] backdrop-blur-xl">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {[
-            { label: "图生图", value: "image_to_image" as GenerationMode },
+            { label: "电商套图", value: "image_to_image" as GenerationMode },
             { label: "文生图", value: "text_to_image" as GenerationMode }
           ].map((item) => (
             <button
@@ -471,8 +491,9 @@ export default function WorkspacePage() {
           ))}
         </div>
 
+        {generationMode === "image_to_image" ? (
         <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3">
-          {quickFeaturePresets.map((preset) => (
+          {sortedQuickFeaturePresets.map((preset) => (
             <button
               key={preset.title}
               type="button"
@@ -484,6 +505,7 @@ export default function WorkspacePage() {
             </button>
           ))}
         </div>
+        ) : null}
 
         <div
           onDragOver={(event) => event.preventDefault()}
@@ -523,7 +545,7 @@ export default function WorkspacePage() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder={generationMode === "image_to_image" ? "试试输入：把照片上的果汁替换成可乐，或生成一套手机端详情图" : "直接描述要生成的电商图片：例如 便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架"}
+              placeholder={generationMode === "image_to_image" ? "输入产品卖点、规格、使用场景，或选择上方常用能力生成一套手机端电商图" : "直接描述要生成的电商图片：例如 便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架"}
               className="min-h-[110px] flex-1 resize-none border-0 bg-transparent p-1 text-base leading-7 text-white outline-none placeholder:text-white/[0.32]"
             />
             <div className="flex flex-wrap items-center gap-2">

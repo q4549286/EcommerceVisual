@@ -1,0 +1,1 @@
+function e(e){try{return JSON.stringify(e)}catch{return null}}function t(e){try{return JSON.parse(e)}catch{return null}}export{t as n,e as t};

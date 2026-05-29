@@ -1,0 +1,1 @@
+import{f as e}from"./login-D1luOLWW.js";function t(){return e.get(`/api/v1/notice/latestNotice`,{noAuth:!0,closeToast:!0})}function n(){return e.get(`/api/v1/notice/getRemind`,{noAuth:!0,closeToast:!0})}function r(){return e.get(`/api/v1/version/latestVersion`,{noAuth:!0,closeToast:!0})}export{r as n,n as r,t};
