@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AuthError, loginWithApiSettings, loginWithPassword, setSessionCookie } from "@/lib/auth";
+import { appPath } from "@/lib/paths";
 
 export const runtime = "nodejs";
 
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
         model: String(body.imageApi.model || "")
       })
       : await loginWithPassword(String(body?.phone || ""), String(body?.password || ""));
-    const response = NextResponse.json({ ok: true, user: result.user });
+    const response = NextResponse.json({ ok: true, user: result.user, nextUrl: appPath("/") });
     setSessionCookie(response, result.session.token, result.session.expiresAt);
     return response;
   } catch (error) {
