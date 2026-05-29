@@ -16,7 +16,7 @@ export default function LoginPage() {
 
   const [baseUrl, setBaseUrl] = useState("https://aispeedapi.com/v1");
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("image2");
+  const [model, setModel] = useState("gpt-image-2");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const fieldClass = "w-full rounded-2xl border border-white/10 px-4 py-3 text-sm outline-none placeholder:text-white/30 focus:border-white/30";
@@ -108,7 +108,7 @@ export default function LoginPage() {
               <input
                 value={model}
                 onChange={(event) => setModel(event.target.value)}
-                placeholder="image2"
+                placeholder="gpt-image-2"
                 className={fieldClass}
                 style={fieldStyle}
               />

@@ -47,7 +47,7 @@ const defaultImageStorage: AdminSettings["imageStorage"] = {
 const defaultImageApi: AdminSettings["imageApi"] = {
   baseUrl: "",
   apiKey: "",
-  model: "image2",
+  model: "gpt-image-2",
   keyConfigured: false
 };
 
