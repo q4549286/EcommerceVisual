@@ -37,7 +37,7 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
-const inputClass = "w-full rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 text-sm text-white outline-none placeholder:text-white/[0.28] focus:border-white/30 focus:bg-white/10";
+const inputClass = "w-full rounded-xl border border-white/10 bg-white/[0.07] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-white/[0.26] focus:border-white/30 focus:bg-white/10";
 
 function splitLines(value: string) {
   return value.split(/[\n,，]/).map((item) => item.trim()).filter(Boolean);
@@ -480,55 +480,61 @@ export default function WorkspacePage() {
       </section>
 
       {generationMode === "image_to_image" ? (
-        <section className="mx-auto mt-5 max-w-4xl rounded-[24px] border border-white/[0.08] bg-white/5 p-4 backdrop-blur">
-            <div className="mb-4 text-xs font-medium text-white/[0.48]">商品资料</div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <FieldBlock label="产品名">
-                <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="例：可携式果汁机" className={inputClass} />
-              </FieldBlock>
-              <FieldBlock label="运营场景">
-                <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={inputClass}>
-                  {listingIntentOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
-                </select>
-              </FieldBlock>
-              <FieldBlock label="类目">
-                <input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="例：餐饮/零售/服饰" className={inputClass} />
-              </FieldBlock>
-            </div>
+        <section className="mx-auto mt-5 max-w-4xl rounded-[20px] border border-white/[0.08] bg-white/[0.045] p-4 backdrop-blur">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-xs font-medium text-white/[0.5]">商品资料</div>
+            <div className="text-[11px] text-white/[0.32]">用于自动组织提示词，不会生成在画面里</div>
+          </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FieldBlock label="品牌"><input value={brand} onChange={(e) => setBrand(e.target.value)} className={inputClass} /></FieldBlock>
-                <FieldBlock label="材质"><input value={material} onChange={(e) => setMaterial(e.target.value)} className={inputClass} /></FieldBlock>
-                <FieldBlock label="尺寸参数"><input value={size} onChange={(e) => setSize(e.target.value)} className={inputClass} /></FieldBlock>
-                <FieldBlock label="颜色"><input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} /></FieldBlock>
-                <FieldBlock label="适用人群"><input value={audience} onChange={(e) => setAudience(e.target.value)} className={inputClass} /></FieldBlock>
-                <FieldBlock label="避免词"><input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="假价格、二维码、水印" className={inputClass} /></FieldBlock>
-              </div>
-              <div className="space-y-3">
-                <FieldBlock label="核心卖点">
-                  <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={4} placeholder="每行一个卖点" className={`${inputClass} resize-none`} />
-                </FieldBlock>
-                <div>
-                  <div className="mb-2 text-xs font-medium text-white/[0.55]">本次输出清单</div>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                    {imageTypeOptions.map((item) => {
-                      const active = selectedTypes.includes(item.key);
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => toggleType(item.key)}
-                          className={`rounded-2xl border px-3 py-3 text-left text-xs transition ${active ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.06] text-white/60 hover:bg-white/10"}`}
-                        >
-                          <span className="block font-medium">{item.shortTitle}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <FieldBlock label="产品名">
+              <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="例：可携式果汁机" className={inputClass} />
+            </FieldBlock>
+            <FieldBlock label="运营场景">
+              <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={inputClass}>
+                {listingIntentOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
+              </select>
+            </FieldBlock>
+            <FieldBlock label="类目">
+              <input value={category} onChange={(event) => setCategory(event.target.value)} placeholder="例：餐饮/零售/服饰" className={inputClass} />
+            </FieldBlock>
+          </div>
+
+          <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.9fr)]">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FieldBlock label="品牌"><input value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="可选" className={inputClass} /></FieldBlock>
+              <FieldBlock label="材质"><input value={material} onChange={(e) => setMaterial(e.target.value)} placeholder="可选" className={inputClass} /></FieldBlock>
+              <FieldBlock label="尺寸参数"><input value={size} onChange={(e) => setSize(e.target.value)} placeholder="可选" className={inputClass} /></FieldBlock>
+              <FieldBlock label="颜色"><input value={color} onChange={(e) => setColor(e.target.value)} placeholder="可选" className={inputClass} /></FieldBlock>
+              <FieldBlock label="适用人群"><input value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="可选" className={inputClass} /></FieldBlock>
+              <FieldBlock label="避免词"><input value={avoid} onChange={(e) => setAvoid(e.target.value)} placeholder="假价格、二维码、水印" className={inputClass} /></FieldBlock>
             </div>
+            <FieldBlock label="核心卖点">
+              <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={5} placeholder="每行一个卖点" className={`${inputClass} min-h-[148px] resize-none leading-6`} />
+            </FieldBlock>
+          </div>
+
+          <div className="mt-5 border-t border-white/[0.08] pt-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="text-xs font-medium text-white/[0.55]">本次输出清单</div>
+              <div className="text-[11px] text-white/[0.32]">{selectedTypes.length} / {imageTypeOptions.length}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {imageTypeOptions.map((item) => {
+                const active = selectedTypes.includes(item.key);
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => toggleType(item.key)}
+                    className={`flex min-h-[52px] items-center justify-center rounded-xl border px-2.5 text-center text-xs font-medium transition ${active ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.045] text-white/55 hover:bg-white/10 hover:text-white/75"}`}
+                  >
+                    {item.shortTitle}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </section>
       ) : null}
 
