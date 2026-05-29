@@ -37,7 +37,9 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
-const inputClass = "w-full rounded-xl border border-white/10 bg-white/[0.07] px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-white/[0.26] focus:border-white/30 focus:bg-white/10";
+const controlClass = "w-full rounded-xl border border-white/10 bg-white/[0.07] text-sm text-white outline-none placeholder:text-white/[0.26] focus:border-white/30 focus:bg-white/10";
+const inputClass = `${controlClass} h-11 px-3.5`;
+const selectClass = `${controlClass} h-11 px-3.5`;
 
 function splitLines(value: string) {
   return value.split(/[\n,，]/).map((item) => item.trim()).filter(Boolean);
@@ -496,7 +498,7 @@ export default function WorkspacePage() {
               <input value={productName} onChange={(event) => setProductName(event.target.value)} placeholder="例：可携式果汁机" className={inputClass} />
             </FieldBlock>
             <FieldBlock label="运营场景">
-              <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={inputClass}>
+              <select value={listingIntent} onChange={(event) => setListingIntent(event.target.value as ListingIntent)} className={selectClass}>
                 {listingIntentOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
               </select>
             </FieldBlock>
