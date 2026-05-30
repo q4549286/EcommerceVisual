@@ -98,6 +98,25 @@ function FieldBlock({ label, children }: { label: string; children: ReactNode })
   );
 }
 
+function taskToHistoryEntry(task: TaskSummary): HistoryEntry | null {
+  if (!task.plans?.length) return null;
+  const successCount = task.plans.filter((plan) => Boolean(plan.imageUrl)).length;
+  const failCount = task.plans.filter((plan) => !plan.imageUrl).length;
+  const finishedAt = task.finishedAt ? new Date(task.finishedAt).getTime() : Date.now();
+  return {
+    id: task.generationId || task.id,
+    timestamp: Number.isFinite(finishedAt) ? finishedAt : Date.now(),
+    productName: task.title || "未命名",
+    language: "zh-CN",
+    imageCount: task.totalSteps || task.plans.length,
+    successCount,
+    failCount,
+    status: task.status === "SUCCEEDED" && failCount === 0 ? "success" : successCount > 0 ? "partial" : "failed",
+    error: task.error || null,
+    plans: task.plans
+  };
+}
+
 export default function WorkspacePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
@@ -279,7 +298,7 @@ export default function WorkspacePage() {
 
   function persistHistory(entry: HistoryEntry) {
     const list = loadJSON<HistoryEntry[]>(HISTORY_KEY, []);
-    let next = [entry, ...list].slice(0, HISTORY_LIMIT);
+    let next = [entry, ...list.filter((item) => item.id !== entry.id)].slice(0, HISTORY_LIMIT);
     while (next.length > 0) {
       try {
         window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
@@ -323,9 +342,13 @@ export default function WorkspacePage() {
         for (const task of data.items) {
           const last = previous.get(task.id);
           if ((last === "PENDING" || last === "RUNNING") && task.status === "SUCCEEDED") {
+            const historyEntry = taskToHistoryEntry(task);
+            if (historyEntry) persistHistory(historyEntry);
             show(`任务「${task.title}」已完成`, "success");
           }
           if ((last === "PENDING" || last === "RUNNING") && task.status === "FAILED") {
+            const historyEntry = taskToHistoryEntry(task);
+            if (historyEntry) persistHistory(historyEntry);
             show(`任务「${task.title}」失败了`, "danger");
           }
         }

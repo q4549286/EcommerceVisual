@@ -7,7 +7,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Tag } from "@/components/ui/Tag";
 import { TextInput } from "@/components/ui/FormField";
 import { useToast } from "@/components/ui/Toast";
-import { apiFetch } from "@/lib/client-api";
 import { formatRelative } from "@/lib/format";
 import type { HistoryEntry, ImagePlan } from "@/lib/types";
 
@@ -65,17 +64,8 @@ export default function HistoryPage() {
 
   async function load() {
     setLoading(true);
-    try {
-      const data = await apiFetch<{ items: HistoryEntry[] }>("/api/me/generations?limit=50", { cache: "no-store" });
-      const localHistory = loadHistory();
-      const localOnly = localHistory.filter((entry) => !data.items.some((item) => item.id === entry.id));
-      setHistory([...data.items, ...localOnly]);
-    } catch (err) {
-      setHistory(loadHistory());
-      show(err instanceof Error ? err.message : "读取历史记录失败", "danger");
-    } finally {
-      setLoading(false);
-    }
+    setHistory(loadHistory());
+    setLoading(false);
   }
 
   function persist(next: HistoryEntry[]) {
@@ -89,17 +79,11 @@ export default function HistoryPage() {
   async function deleteEntry(entry: HistoryEntry) {
     setDeletingId(entry.id);
     try {
-      const response = await fetch(`/api/me/generations/${entry.id}`, { method: "DELETE" });
-      const data: { ok?: boolean; error?: string } = await response.json().catch(() => ({}));
-      if (!response.ok && response.status !== 404) {
-        throw new Error(data.error || "删除历史记录失败。");
-      }
-
       const next = history.filter((item) => item.id !== entry.id);
       persist(next);
       if (active?.id === entry.id) setActive(null);
       if (preview && entry.plans.some((plan) => plan.type === preview.type)) setPreview(null);
-      show(response.status === 404 ? "已删除本机历史" : "已删除历史记录", "success");
+      show("已删除本机历史", "success");
     } catch (err) {
       show(err instanceof Error ? err.message : "删除历史记录失败", "danger");
     } finally {
@@ -122,13 +106,13 @@ export default function HistoryPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">历史记录</h1>
-          <p className="mt-1 text-sm text-slate-500">最近的生成结果会保存在账号中，方便随时查阅与重用提示词。</p>
+          <p className="mt-1 text-sm text-slate-500">最近的生成结果只保存在当前浏览器本机，方便随时查阅与重用提示词。</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={load} disabled={loading}>刷新</Button>
           {history.length > 0 ? (
             <Button variant="secondary" size="sm" onClick={() => {
-              if (confirm("确认清空本机缓存历史？数据库历史不会删除。")) persist([]);
+              if (confirm("确认清空本机历史？")) persist([]);
             }}>清空本机缓存</Button>
           ) : null}
         </div>
@@ -158,7 +142,7 @@ export default function HistoryPage() {
       {filtered.length === 0 ? (
         <EmptyState
           title={loading ? "正在加载历史" : "暂无历史"}
-          description={loading ? "正在读取账号生成记录。" : history.length === 0 ? "生成第一张图后，记录会出现在这里。" : "当前筛选下没有数据。"}
+          description={loading ? "正在读取本机历史。" : history.length === 0 ? "生成第一张图后，记录会保存在当前浏览器。" : "当前筛选下没有数据。"}
         />
       ) : (
         <div className="space-y-3">
