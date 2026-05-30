@@ -4,7 +4,7 @@ import type { NextResponse } from "next/server";
 import { grantLoginCredits } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
 import { writeSystemLog } from "@/lib/server-logs";
-import { setImageApiSettings } from "@/lib/settings";
+import { setUserImageApiSettings } from "@/lib/settings";
 import type { AuthUser } from "@/lib/types";
 
 const scrypt = promisify(scryptCallback);
@@ -80,7 +80,7 @@ function toAuthUser(user: {
 }): AuthUser {
   return {
     id: user.id,
-    phone: user.phone === API_WORKSPACE_PHONE ? "API 工作区" : user.phone,
+    phone: user.phone.startsWith(API_WORKSPACE_PHONE) ? "API 工作区" : user.phone,
     role: user.role as AuthUser["role"],
     status: user.status as AuthUser["status"],
     credits: user.credits,
@@ -90,27 +90,12 @@ function toAuthUser(user: {
 }
 
 async function ensureApiWorkspaceUser() {
-  const existing = await prisma.user.findUnique({
-    where: { phone: API_WORKSPACE_PHONE }
-  });
-
-  if (existing) {
-    return prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        role: "ADMIN",
-        status: "ACTIVE",
-        credits: existing.credits < 1000 ? API_WORKSPACE_CREDITS : existing.credits,
-        lastLoginAt: new Date()
-      }
-    });
-  }
-
+  const phone = `api-manager-${randomBytes(12).toString("hex")}`;
   return prisma.user.create({
     data: {
-      phone: API_WORKSPACE_PHONE,
+      phone,
       passwordHash: await hashPassword(randomBytes(24).toString("base64url")),
-      role: "ADMIN",
+      role: "USER",
       status: "ACTIVE",
       credits: API_WORKSPACE_CREDITS,
       lastLoginAt: new Date()
@@ -308,8 +293,8 @@ export async function loginWithApiSettings(input: { baseUrl: string; apiKey: str
     throw new AuthError("请输入图片模型名称。", 400);
   }
 
-  await setImageApiSettings({ baseUrl, apiKey, model });
   const user = await ensureApiWorkspaceUser();
+  await setUserImageApiSettings(user.id, { baseUrl, apiKey, model });
   const session = await createSession(user.id);
 
   await writeSystemLog({

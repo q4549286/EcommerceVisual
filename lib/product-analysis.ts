@@ -1,4 +1,4 @@
-import { getImageApiSettings } from "@/lib/settings";
+import { getUserImageApiSettings } from "@/lib/settings";
 import type { Language, PlatformKey, ProductAnalysis } from "@/lib/types";
 
 function mimeFromFile(file: File) {
@@ -143,8 +143,8 @@ function buildAnalysisPrompt(language: Language, platform?: PlatformKey) {
   ].join("\n");
 }
 
-export async function analyzeProductImage(file: File, language: Language, platform?: PlatformKey) {
-  const settings = await getImageApiSettings(true);
+export async function analyzeProductImage(userId: string, file: File, language: Language, platform?: PlatformKey) {
+  const settings = await getUserImageApiSettings(userId, true);
   const baseUrl = settings.baseUrl.replace(/\/$/, "");
   const apiKey = settings.apiKey || "";
   const model = process.env.IMAGE_ANALYSIS_MODEL || "gpt-5.4";

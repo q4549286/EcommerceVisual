@@ -75,7 +75,7 @@ export default function LoginPage() {
           <div className="mb-5">
             <h1 className="text-xl font-semibold tracking-tight">配置 API，进入工作台</h1>
             <p className="mt-1.5 text-sm leading-6 text-white/[0.55]">
-              不再使用手机号登录。API Base、Key、图片模型会写入数据库持久化，后续生成统一读取这套配置。
+              不再使用手机号登录。API Base、Key、图片模型只保存到当前工作区，后续生成读取本次配置。
             </p>
           </div>
 

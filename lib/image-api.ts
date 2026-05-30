@@ -1,5 +1,5 @@
 import type { CallLog, ImagePlan, QualityMode } from "./types";
-import { getImageApiSettings } from "@/lib/settings";
+import { getUserImageApiSettings } from "@/lib/settings";
 
 const MAX_RETRIES = 2;
 const IMAGE_API_TIMEOUT_MS = Number(process.env.IMAGE_API_TIMEOUT_MS || 240_000);
@@ -15,8 +15,8 @@ function normalizeModel(input: string) {
   return value;
 }
 
-async function imageApiConfig() {
-  const settings = await getImageApiSettings(true);
+async function imageApiConfig(userId: string) {
+  const settings = await getUserImageApiSettings(userId, true);
   return {
     baseUrl: settings.baseUrl.replace(/\/$/, ""),
     apiKey: settings.apiKey || "",
@@ -133,10 +133,10 @@ async function requestWithRetry(url: string, init: RequestInit) {
   throw lastError instanceof Error ? lastError : new Error("Image API request failed.");
 }
 
-export async function generateEditedImage(plan: ImagePlan, productImage: File, referenceImages: File[] = [], qualityMode: QualityMode = "fast"): Promise<ImageCallResult> {
+export async function generateEditedImage(userId: string, plan: ImagePlan, productImage: File, referenceImages: File[] = [], qualityMode: QualityMode = "fast"): Promise<ImageCallResult> {
   const startedAt = Date.now();
   const normalizedSize = normalizeSize(plan.size, qualityMode);
-  const config = await imageApiConfig();
+  const config = await imageApiConfig(userId);
   const endpointUrl = config.baseUrl ? `${config.baseUrl}/images/edits` : "";
   const modelName = config.model;
 
@@ -210,10 +210,10 @@ The first uploaded image is the product image and must define the real SKU. The 
   }
 }
 
-export async function generateTextImage(plan: ImagePlan, qualityMode: QualityMode = "fast"): Promise<ImageCallResult> {
+export async function generateTextImage(userId: string, plan: ImagePlan, qualityMode: QualityMode = "fast"): Promise<ImageCallResult> {
   const startedAt = Date.now();
   const normalizedSize = normalizeSize(plan.size, qualityMode);
-  const config = await imageApiConfig();
+  const config = await imageApiConfig(userId);
   const endpointUrl = config.baseUrl ? `${config.baseUrl}/images/generations` : "";
   const modelName = config.model;
 

@@ -138,6 +138,51 @@ export async function getImageApiSettings(includeSecret = false): Promise<ImageA
   };
 }
 
+export async function getUserImageApiSettings(userId: string, includeSecret = false): Promise<ImageApiSettings> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { phone: true, imageApiConfig: true }
+  }).catch(() => null);
+  const value = parseObject(user?.imageApiConfig);
+  const storedApiKey = stringValue(value.apiKey);
+  if (stringValue(value.baseUrl) || storedApiKey || stringValue(value.model)) {
+    return {
+      baseUrl: stringValue(value.baseUrl),
+      apiKey: includeSecret ? storedApiKey : "",
+      model: stringValue(value.model) || "gpt-image-2",
+      keyConfigured: Boolean(storedApiKey)
+    };
+  }
+  if (user?.phone.startsWith("api-manager")) {
+    return {
+      baseUrl: "",
+      apiKey: "",
+      model: "gpt-image-2",
+      keyConfigured: false
+    };
+  }
+  return getImageApiSettings(includeSecret);
+}
+
+export async function setUserImageApiSettings(userId: string, input: Partial<ImageApiSettings>) {
+  const baseUrl = stringValue(input.baseUrl).replace(/\/$/, "");
+  const apiKey = stringValue(input.apiKey);
+  const model = stringValue(input.model) || "gpt-image-2";
+  if (!/^https?:\/\/.+/i.test(baseUrl)) {
+    throw new Error("请输入有效的 API Base URL。");
+  }
+  if (!apiKey || apiKey.length < 12) {
+    throw new Error("请输入有效的 API Key。");
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      imageApiConfig: { baseUrl, apiKey, model }
+    }
+  });
+  return getUserImageApiSettings(userId, false);
+}
+
 export async function setImageApiSettings(input: Partial<ImageApiSettings>) {
   const current = parseObject(await getSettingValue("imageApi", {}));
   const currentApiKey = stringValue(current.apiKey);

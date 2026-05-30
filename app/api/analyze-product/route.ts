@@ -25,7 +25,7 @@ function isPlatform(value: string): value is PlatformKey {
 
 export async function POST(request: Request) {
   try {
-    await requireUser(request);
+    const user = await requireUser(request);
     const formData = await request.formData();
     const image = formData.get("productImage");
     const rawLanguage = String(formData.get("language") || "zh-CN");
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     const language = isLanguage(rawLanguage) ? rawLanguage : "zh-CN";
     const platform = isPlatform(rawPlatform) ? rawPlatform : "generic";
-    const analysis = await analyzeProductImage(image, language, platform);
+    const analysis = await analyzeProductImage(user.id, image, language, platform);
     return NextResponse.json({ ok: true, analysis });
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 500;

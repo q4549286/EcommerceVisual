@@ -214,8 +214,8 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
       });
 
       const result = isTextToImage
-        ? await generateTextImage(plan, qualityMode)
-        : await generateEditedImage(plan, productImageFile as File, referenceImages, qualityMode);
+        ? await generateTextImage(input.userId, plan, qualityMode)
+        : await generateEditedImage(input.userId, plan, productImageFile as File, referenceImages, qualityMode);
 
       logs.push(result.log);
       await writeApiLog(input.userId, "image.generate", result.log);
