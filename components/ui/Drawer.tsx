@@ -31,11 +31,11 @@ export function Drawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-40 flex" onClick={onClose}>
+    <div className="fixed inset-x-0 bottom-0 top-16 z-40 flex" onClick={onClose}>
       <div className="flex-1 bg-black/40" />
       <aside
-        className="flex h-full flex-col border-l border-slate-200 bg-white shadow-2xl"
-        style={{ width }}
+        className="flex h-full max-w-[calc(100vw-16px)] flex-col border-l border-slate-200 bg-white shadow-2xl sm:max-w-[calc(100vw-80px)]"
+        style={{ width: `min(${width}px, calc(100vw - 16px))` }}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-6 py-4">
