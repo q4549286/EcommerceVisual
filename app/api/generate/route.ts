@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return badRequest("请上传商品图。");
     }
     if (!input.productName?.trim()) {
-      if (isTextToImage && input.description?.trim()) input.productName = "文生图";
+      if (isTextToImage && input.description?.trim()) input.productName = "文字生图";
       else return badRequest("请填写商品名称。");
     }
 

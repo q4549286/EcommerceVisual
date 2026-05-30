@@ -550,6 +550,36 @@ function createPlan(input: ProductInput, type: ImageTypeKey): ImagePlan {
   const detailCopy = detailLabels(input);
   const locale = languageShortName(input.language);
 
+  if (type === "text_square" || type === "text_portrait" || type === "text_tall") {
+    const size = type === "text_square" ? "1024x1024" : type === "text_tall" ? "1024x1280" : "1024x1365";
+    return {
+      type,
+      title: "文字生图",
+      usage: "根据文字描述生成单张商品图。",
+      size,
+      localizedCopy: [],
+      designNotes: "严格按用户描述生成，商品主体清楚，画面干净，可直接用于电商素材。",
+      prompt: promptWithNegative(
+        input,
+        isChineseLanguage(input.language)
+          ? [
+            input.description || input.productName,
+            "单张完整商品图，按用户描述确定主体、背景、构图、光线和风格",
+            "商品或主视觉必须清晰，画面干净，商业质感，不添加二维码、水印、电话、平台官方标识或假价格",
+            "如果用户没有要求文字，就不要加大段文字；如果需要文字，只使用短标题或极短卖点"
+          ].join("，")
+          : [
+            input.description || input.productName,
+            "single finished ecommerce product image, follow the user's subject, background, composition, lighting, and style",
+            "clear product or hero subject, clean commercial finish, no QR code, watermark, phone number, official platform logo, or fake price",
+            "if typography is not requested, avoid long text; if text is useful, use only a short headline or tiny benefit callout"
+          ].join(", "),
+        "extra unrelated product, fake marketplace UI, fake price, QR code, watermark, phone number, long paragraph, unreadable tiny text"
+      ),
+      negativePrompt: negativePrompt(input, "extra unrelated product, fake marketplace UI, fake price, QR code, watermark, phone number, long paragraph, unreadable tiny text")
+    };
+  }
+
   if (type === "main_white_bg") {
     return {
       type,

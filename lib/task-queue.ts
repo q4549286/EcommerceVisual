@@ -6,6 +6,14 @@ import type { ImagePlan, ProductInput, TaskSummary } from "@/lib/types";
 const runningTasks = new Set<string>();
 const queuedTaskIds: string[] = [];
 let workerRunning = false;
+const DEFAULT_TASK_CONCURRENCY = 5;
+
+function positiveInt(value: string | undefined, fallback: number) {
+  const parsed = Number.parseInt(value || "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const TASK_CONCURRENCY = positiveInt(process.env.TASK_CONCURRENCY, DEFAULT_TASK_CONCURRENCY);
 
 type TaskRecord = {
   id: string;
@@ -207,19 +215,31 @@ async function drainQueue() {
   workerRunning = true;
 
   try {
-    while (queuedTaskIds.length > 0) {
+    while (queuedTaskIds.length > 0 && runningTasks.size < TASK_CONCURRENCY) {
       const taskId = queuedTaskIds.shift();
       if (!taskId || runningTasks.has(taskId)) continue;
       runningTasks.add(taskId);
-      try {
-        await processTask(taskId);
-      } finally {
-        runningTasks.delete(taskId);
-      }
+      void processTask(taskId)
+        .catch(async (error) => {
+          const message = error instanceof Error ? error.message : "任务执行失败。";
+          await prisma.generationTask.update({
+            where: { id: taskId },
+            data: {
+              status: "FAILED",
+              message,
+              error: message,
+              finishedAt: new Date()
+            }
+          }).catch(() => undefined);
+        })
+        .finally(() => {
+          runningTasks.delete(taskId);
+          void drainQueue();
+        });
     }
   } finally {
     workerRunning = false;
-    if (queuedTaskIds.length > 0) {
+    if (queuedTaskIds.length > 0 && runningTasks.size < TASK_CONCURRENCY) {
       void drainQueue();
     }
   }

@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       return badRequest("请上传商品图。");
     }
     if (!input.productName?.trim()) {
-      if (isTextToImage && input.description?.trim()) input.productName = "文生图";
+      if (isTextToImage && input.description?.trim()) input.productName = "文字生图";
       else return badRequest("请填写商品名称。");
     }
     if (!input.description?.trim() && isTextToImage) {
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       return badRequest("请至少选择一种图片类型。");
     }
     if (user.credits < plans.length) {
-      return badRequest(`额度不足，本次需要 ${plans.length} 点。`);
+      return badRequest("当前账号无法继续生成，请联系管理员。");
     }
 
     const task = await createGenerationTask({

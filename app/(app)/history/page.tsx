@@ -24,6 +24,23 @@ function loadHistory(): HistoryEntry[] {
   }
 }
 
+function getHistoryStatus(entry: HistoryEntry): NonNullable<HistoryEntry["status"]> {
+  if (entry.status) return entry.status;
+  if (entry.successCount > 0 && entry.successCount >= entry.imageCount && entry.failCount === 0) return "success";
+  if (entry.successCount > 0) return "partial";
+  if (entry.failCount > 0) return "failed";
+  return "running";
+}
+
+function getHistoryBadge(entry: HistoryEntry) {
+  const status = getHistoryStatus(entry);
+  if (status === "success") return { label: "生成成功", tone: "success" as const };
+  if (status === "partial") return { label: `${entry.successCount}/${entry.imageCount} 成功`, tone: "warning" as const };
+  if (status === "failed") return { label: "生成失败", tone: "danger" as const };
+  if (status === "canceled") return { label: "已终止", tone: "warning" as const };
+  return { label: "生成中", tone: "neutral" as const };
+}
+
 export default function HistoryPage() {
   const { show } = useToast();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -32,6 +49,7 @@ export default function HistoryPage() {
   const [active, setActive] = useState<HistoryEntry | null>(null);
   const [preview, setPreview] = useState<ImagePlan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     load();
@@ -68,11 +86,33 @@ export default function HistoryPage() {
     }
   }
 
+  async function deleteEntry(entry: HistoryEntry) {
+    setDeletingId(entry.id);
+    try {
+      const response = await fetch(`/api/me/generations/${entry.id}`, { method: "DELETE" });
+      const data: { ok?: boolean; error?: string } = await response.json().catch(() => ({}));
+      if (!response.ok && response.status !== 404) {
+        throw new Error(data.error || "删除历史记录失败。");
+      }
+
+      const next = history.filter((item) => item.id !== entry.id);
+      persist(next);
+      if (active?.id === entry.id) setActive(null);
+      if (preview && entry.plans.some((plan) => plan.type === preview.type)) setPreview(null);
+      show(response.status === 404 ? "已删除本机历史" : "已删除历史记录", "success");
+    } catch (err) {
+      show(err instanceof Error ? err.message : "删除历史记录失败", "danger");
+    } finally {
+      setDeletingId("");
+    }
+  }
+
   const filtered = useMemo(() => {
     return history.filter((entry) => {
+      const status = getHistoryStatus(entry);
       if (keyword && !entry.productName.toLowerCase().includes(keyword.toLowerCase())) return false;
-      if (filter === "success" && entry.failCount > 0) return false;
-      if (filter === "fail" && entry.failCount === 0) return false;
+      if (filter === "success" && status !== "success") return false;
+      if (filter === "fail" && !["partial", "failed", "canceled"].includes(status)) return false;
       return true;
     });
   }, [history, keyword, filter]);
@@ -124,6 +164,7 @@ export default function HistoryPage() {
         <div className="space-y-3">
           {filtered.map((entry) => {
             const thumb = entry.plans.find((p) => p.imageUrl)?.imageUrl;
+            const badge = getHistoryBadge(entry);
             return (
               <article key={entry.id} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4">
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-50">
@@ -132,15 +173,17 @@ export default function HistoryPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="truncate text-sm font-semibold">{entry.productName || "未命名"}</h3>
-                    {entry.failCount === 0 ? <Tag tone="success">全部成功</Tag> : <Tag tone="warning">{entry.failCount} 张失败</Tag>}
+                    <Tag tone={badge.tone}>{badge.label}</Tag>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">
-                    {entry.imageCount} 张 · {entry.language} · {formatRelative(entry.timestamp)}
+                    {entry.successCount}/{entry.imageCount} 张 · {entry.language} · {formatRelative(entry.timestamp)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="secondary" size="sm" onClick={() => setActive(entry)}>查看</Button>
-                  <Button variant="ghost" size="sm" onClick={() => persist(history.filter((item) => item.id !== entry.id))}>删除</Button>
+                  <Button variant="ghost" size="sm" onClick={() => void deleteEntry(entry)} disabled={deletingId === entry.id}>
+                    {deletingId === entry.id ? "删除中" : "删除"}
+                  </Button>
                 </div>
               </article>
             );

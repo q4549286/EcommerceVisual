@@ -38,13 +38,40 @@ const listingIntentOptions: { value: ListingIntent; label: string }[] = [
 ];
 
 const qualityModeOptions: { value: QualityMode; label: string; hint: string }[] = [
-  { value: "fast", label: "快速模式", hint: "1K" },
-  { value: "hd", label: "高清模式", hint: "2K" }
+  { value: "fast", label: "快速", hint: "长边 1024" },
+  { value: "hd", label: "高清", hint: "长边 2048" }
+];
+
+const generationModeOptions: { value: GenerationMode; label: string; hint: string }[] = [
+  { value: "image_to_image", label: "上传改图", hint: "保留商品，批量生成电商套图" },
+  { value: "text_to_image", label: "文字生图", hint: "从描述生成商品视觉" }
+];
+
+const typeSizeHints: Record<ImageTypeKey, { ratio: string; size: string }> = {
+  main_white_bg: { ratio: "1:1", size: "1024x1024" },
+  platform_listing: { ratio: "1:1", size: "1024x1024" },
+  campaign_poster: { ratio: "3:4", size: "1024x1365" },
+  feature_infographic: { ratio: "3:4", size: "1024x1365" },
+  detail_specs: { ratio: "4:5", size: "1024x1280" },
+  package_label: { ratio: "4:5", size: "1024x1280" },
+  virtual_try_on: { ratio: "3:4", size: "1024x1365" },
+  handheld_product: { ratio: "3:4", size: "1024x1365" },
+  lifestyle: { ratio: "1:1", size: "1024x1024" },
+  delist_notice: { ratio: "3:4", size: "1024x1365" },
+  text_square: { ratio: "1:1", size: "1024x1024" },
+  text_portrait: { ratio: "3:4", size: "1024x1365" },
+  text_tall: { ratio: "4:5", size: "1024x1280" }
+};
+
+const textRatioOptions: { value: string; label: string; size: string; imageType: ImageTypeKey }[] = [
+  { value: "1:1", label: "1:1", size: "1024x1024", imageType: "text_square" },
+  { value: "3:4", label: "3:4", size: "1024x1365", imageType: "text_portrait" },
+  { value: "4:5", label: "4:5", size: "1024x1280", imageType: "text_tall" }
 ];
 
 const initialTypes = imageTypeOptions.filter((item) => item.defaultSelected).map((item) => item.key);
 const validTypeKeys = new Set(imageTypeOptions.map((item) => item.key));
-const controlClass = "w-full rounded-xl border border-white/10 bg-white/[0.07] text-sm text-white outline-none placeholder:text-white/[0.26] focus:border-white/30 focus:bg-white/10";
+const controlClass = "w-full rounded-lg border border-white/10 bg-white/[0.07] text-sm text-white outline-none placeholder:text-white/[0.26] focus:border-white/30 focus:bg-white/10";
 const inputClass = `${controlClass} h-11 px-3.5`;
 const selectClass = `${controlClass} h-11 px-3.5`;
 
@@ -91,6 +118,7 @@ export default function WorkspacePage() {
   const [description, setDescription] = useState("");
   const [language, setLanguage] = useState<Language>("zh-CN");
   const [qualityMode, setQualityMode] = useState<QualityMode>("fast");
+  const [textImageRatio, setTextImageRatio] = useState("1:1");
   const [brand, setBrand] = useState("");
   const [material, setMaterial] = useState("");
   const [size, setSize] = useState("");
@@ -209,16 +237,25 @@ export default function WorkspacePage() {
     setError("");
   }
 
+  function imageTypesForCurrentMode() {
+    if (generationMode === "text_to_image") {
+      const ratio = textRatioOptions.find((item) => item.value === textImageRatio) || textRatioOptions[0];
+      return [ratio.imageType];
+    }
+    return selectedTypes;
+  }
+
   function buildInput(imageTypes = selectedTypes): ProductInput {
-    const normalizedProductName = generationMode === "text_to_image" ? "文生图" : productName.trim();
+    const isTextToImage = generationMode === "text_to_image";
+    const normalizedProductName = generationMode === "text_to_image" ? "文字生图" : productName.trim();
     return {
       productName: normalizedProductName,
       generationMode,
-      platform,
-      listingIntent,
+      platform: isTextToImage ? "generic" : platform,
+      listingIntent: isTextToImage ? "new_listing" : listingIntent,
       category,
       description,
-      language,
+      language: isTextToImage ? "zh-CN" : language,
       brand,
       material,
       size,
@@ -237,7 +274,6 @@ export default function WorkspacePage() {
     if (generationMode === "image_to_image" && !productName.trim()) return "请填写商品名称。";
     if (generationMode === "text_to_image" && !description.trim()) return "请写一句想生成的商品图描述。";
     if (imageTypes.length === 0) return "请至少选择一种图片类型。";
-    if (user.credits < imageTypes.length) return `额度不足，本次需要 ${imageTypes.length} 点。`;
     return "";
   }
 
@@ -370,7 +406,7 @@ export default function WorkspacePage() {
       const data: { ok: boolean; analysis?: ProductAnalysis; error?: string } = await response.json();
       if (!data.ok || !data.analysis) throw new Error(data.error || "商品识别失败。");
       applyAnalysis(data.analysis);
-      show("已填写下列信息", "success");
+      show("已自动识别商品资料", "success");
     } catch (err) {
       const message = err instanceof Error ? err.message : "商品识别失败。";
       setError(message);
@@ -404,6 +440,8 @@ export default function WorkspacePage() {
 
   const activeTask = activeTaskId ? tasks.find((task) => task.id === activeTaskId) || null : null;
   const runningCount = tasks.filter((task) => ["PENDING", "RUNNING"].includes(task.status)).length;
+  const activeModeOption = generationModeOptions.find((item) => item.value === generationMode) || generationModeOptions[0];
+  const currentImageTypes = imageTypesForCurrentMode();
 
   useEffect(() => {
     if (activeTask?.plans?.length) {
@@ -416,33 +454,43 @@ export default function WorkspacePage() {
       <button
         type="button"
         onClick={() => setTaskDrawerOpen(true)}
-        className="fixed right-4 top-20 z-40 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/55 px-4 py-2 text-xs text-white/80 shadow-xl shadow-black/30 backdrop-blur-xl hover:bg-black/70 sm:right-6"
+        className="fixed bottom-5 right-4 z-40 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[#111]/90 px-3 py-2 text-xs text-white/80 shadow-xl shadow-black/30 backdrop-blur hover:bg-[#181818] sm:bottom-6 sm:right-6"
       >
-        <span>任务队列</span>
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1.5 text-[11px] font-semibold text-black">{runningCount}</span>
+        <span>后台队列</span>
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-white px-1.5 text-[11px] font-semibold text-black">{runningCount}</span>
       </button>
 
-      <section className="mx-auto flex max-w-4xl flex-wrap items-center gap-3">
-        <Image src="/brand/ecommerce-mascot.png" alt="" width={56} height={56} className="h-12 w-12 rounded-2xl object-cover" priority />
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">电商专用</h1>
-          <p className="mt-1 text-sm text-white/[0.45]">手机货架、详情页、外卖上架和商品素材工作台</p>
+      <section className="mx-auto flex max-w-5xl flex-wrap items-end justify-between gap-4 border-b border-white/[0.08] pb-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Image src="/brand/ecommerce-mascot.png" alt="" width={52} height={52} className="h-11 w-11 rounded-lg object-cover" priority />
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-white">AI 商品图工作台</h1>
+            <p className="mt-1 text-sm text-white/[0.5]">上传改图、文字生图、手机端电商套图统一生成</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-right text-xs text-white/[0.48]">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
+            <div className="text-white">队列</div>
+            <div>{runningCount} 个</div>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
+            <div className="text-white">输出</div>
+            <div>{currentImageTypes.length} 张</div>
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto mt-5 max-w-4xl rounded-[30px] border border-white/[0.12] bg-black/[0.52] p-3 shadow-2xl shadow-black/[0.45] backdrop-blur-xl">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          {[
-            { label: "电商套图", value: "image_to_image" as GenerationMode },
-            { label: "文生图", value: "text_to_image" as GenerationMode }
-          ].map((item) => (
+      <section className="mx-auto mt-5 max-w-5xl rounded-lg border border-white/[0.12] bg-[#0b0b0b]/95 p-3 shadow-2xl shadow-black/[0.35]">
+        <div className="mb-3 grid gap-2 sm:grid-cols-2">
+          {generationModeOptions.map((item) => (
             <button
               key={item.value}
               type="button"
               onClick={() => switchGenerationMode(item.value)}
-              className={`rounded-full px-5 py-2 text-sm transition ${generationMode === item.value ? "bg-white text-black" : "border border-white/10 bg-white/[0.08] text-white/[0.62] hover:bg-white/[0.12]"}`}
+              className={`rounded-lg border px-4 py-3 text-left transition ${generationMode === item.value ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.05] text-white/[0.7] hover:bg-white/[0.09]"}`}
             >
-              {item.label}
+              <span className="block text-sm font-medium">{item.label}</span>
+              <span className={`mt-1 block text-xs ${generationMode === item.value ? "text-black/55" : "text-white/[0.38]"}`}>{item.hint}</span>
             </button>
           ))}
         </div>
@@ -450,18 +498,21 @@ export default function WorkspacePage() {
         <div
           onDragOver={(event) => event.preventDefault()}
           onDrop={generationMode === "image_to_image" ? onDrop : undefined}
-          className={`grid min-h-[230px] grid-cols-1 gap-4 rounded-[24px] border border-white/[0.08] bg-[#080808]/90 p-4 ${generationMode === "image_to_image" ? "sm:grid-cols-[260px_minmax(0,1fr)]" : ""}`}
+          className={`grid min-h-[240px] grid-cols-1 gap-4 rounded-lg border border-white/[0.08] bg-[#080808] p-4 ${generationMode === "image_to_image" ? "lg:grid-cols-[280px_minmax(0,1fr)]" : ""}`}
         >
           {generationMode === "image_to_image" ? (
-          <div className="grid grid-cols-2 gap-4 border-white/10 sm:border-r sm:pr-4">
-            <div className="col-span-2 px-1 text-xs font-medium text-white/[0.48]">素材输入</div>
+          <div className="grid grid-cols-2 gap-3 border-white/10 lg:border-r lg:pr-4">
+            <div className="col-span-2 flex items-center justify-between px-1">
+              <span className="text-xs font-medium text-white/[0.52]">素材输入</span>
+              <span className="text-[11px] text-white/[0.32]">产品图必填，参考图可选</span>
+            </div>
             <button
               type="button"
               onClick={openFileDialog}
-              className="flex h-full min-h-32 w-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+              className="flex h-full min-h-36 w-full flex-col items-center justify-center rounded-lg border border-dashed border-white/20 bg-white/[0.07] text-white/85 transition hover:bg-white/[0.12]"
               aria-label="上传产品图"
             >
-              {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-40 w-full rounded-3xl object-cover" /> : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传产品图</span></>}
+              {previewUrl ? <img src={previewUrl} alt="产品图" className="h-full max-h-44 w-full rounded-lg object-cover" /> : <><span className="text-3xl font-light">+</span><span className="mt-2 text-sm">产品图</span></>}
             </button>
             <div className="relative h-full min-h-32">
               <button
@@ -469,14 +520,14 @@ export default function WorkspacePage() {
                 onClick={openReferenceDialog}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={onReferenceDrop}
-                className="flex h-full w-full min-h-32 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 bg-white/[0.08] text-white/85 transition hover:bg-white/[0.12]"
+                className="flex h-full w-full min-h-36 flex-col items-center justify-center rounded-lg border border-dashed border-white/20 bg-white/[0.07] text-white/85 transition hover:bg-white/[0.12]"
                 aria-label="上传参考图"
               >
                 {referencePreviewUrls.length > 0 ? (
                   <div className="grid h-full max-h-40 w-full grid-cols-2 gap-1 p-2">
-                    {referencePreviewUrls.slice(0, 4).map((url, index) => <img key={`${url}-${index}`} src={url} alt={`参考图 ${index + 1}`} className="h-full min-h-14 rounded-xl object-cover" />)}
+                    {referencePreviewUrls.slice(0, 4).map((url, index) => <img key={`${url}-${index}`} src={url} alt={`参考图 ${index + 1}`} className="h-full min-h-14 rounded-md object-cover" />)}
                   </div>
-                ) : <><span className="text-4xl font-light">+</span><span className="mt-2 text-sm">上传参考图</span></>}
+                ) : <><span className="text-3xl font-light">+</span><span className="mt-2 text-sm">参考图</span></>}
               </button>
               <span className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-[11px] text-white/[0.38]">（可选）</span>
             </div>
@@ -486,21 +537,24 @@ export default function WorkspacePage() {
           ) : null}
 
           <div className="flex min-w-0 flex-col gap-3">
-            <div className="px-1 text-xs font-medium text-white/[0.48]">{generationMode === "image_to_image" ? "补充要求" : "画面描述"}</div>
+            <div className="flex items-center justify-between gap-3 px-1">
+              <span className="text-xs font-medium text-white/[0.52]">{generationMode === "image_to_image" ? "补充要求" : "画面描述"}</span>
+              <span className="text-[11px] text-white/[0.34]">{activeModeOption.label}</span>
+            </div>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder={generationMode === "image_to_image" ? "输入产品卖点、规格、使用场景，再在下方选择本次要输出的手机端电商图" : "直接描述要生成的电商图片：例如 便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架"}
+              placeholder={generationMode === "image_to_image" ? "输入产品卖点、规格、使用场景；也可以先上传产品图后点自动识别。" : "例：便携榨汁杯手机主图，白底棚拍，商品占比大，适合淘宝货架，干净高转化。"}
               className="min-h-[110px] flex-1 resize-none border-0 bg-transparent p-1 text-base leading-7 text-white outline-none placeholder:text-white/[0.32]"
             />
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex rounded-full border border-white/10 bg-white/[0.07] p-1">
+              <div className="flex rounded-lg border border-white/10 bg-white/[0.07] p-1">
                 {qualityModeOptions.map((item) => (
                   <button
                     key={item.value}
                     type="button"
                     onClick={() => setQualityMode(item.value)}
-                    className={`rounded-full px-3 py-1.5 text-xs transition ${qualityMode === item.value ? "bg-white text-black" : "text-white/60 hover:text-white"}`}
+                    className={`rounded-md px-3 py-1.5 text-xs transition ${qualityMode === item.value ? "bg-white text-black" : "text-white/60 hover:text-white"}`}
                   >
                     {item.label}
                     <span className={qualityMode === item.value ? "ml-1 text-black/55" : "ml-1 text-white/35"}>{item.hint}</span>
@@ -509,30 +563,44 @@ export default function WorkspacePage() {
               </div>
               {generationMode === "image_to_image" ? (
                 <>
-                  <select value={platform} onChange={(event) => setPlatform(event.target.value as PlatformKey)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
+                  <select value={platform} onChange={(event) => setPlatform(event.target.value as PlatformKey)} className="rounded-lg border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
                     {platformOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
                   </select>
-                  <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
+                  <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} className="rounded-lg border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white outline-none">
                     {languageOptions.map((item) => <option key={item.value} value={item.value} className="bg-[#111]">{item.label}</option>)}
                   </select>
-                  {referenceImages.length > 0 ? <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
-                  <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isSubmitting || !productImage} className="whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 disabled:opacity-40">
-                    {isAnalyzing ? "填写中" : "点击填写下列信息"}
+                  {referenceImages.length > 0 ? <span className="rounded-lg border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/55">参考图 {referenceImages.length} 张</span> : null}
+                  <button type="button" onClick={analyzeProduct} disabled={isAnalyzing || isSubmitting || !productImage} className="whitespace-nowrap rounded-lg border border-white/10 bg-white/[0.08] px-3 py-2 text-xs text-white/70 hover:bg-white/[0.12] disabled:opacity-40">
+                    {isAnalyzing ? "识别中" : "自动识别"}
                   </button>
                 </>
-              ) : null}
-              <button type="button" onClick={() => void submitTask(selectedTypes)} disabled={isAnalyzing || isSubmitting} className="ml-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-black shadow-lg transition hover:scale-105 disabled:opacity-50">
+              ) : (
+                <div className="flex rounded-lg border border-white/10 bg-white/[0.07] p-1">
+                  {textRatioOptions.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setTextImageRatio(item.value)}
+                      className={`rounded-md px-3 py-1.5 text-xs transition ${textImageRatio === item.value ? "bg-white text-black" : "text-white/60 hover:text-white"}`}
+                    >
+                      {item.label}
+                      <span className={textImageRatio === item.value ? "ml-1 text-black/55" : "ml-1 text-white/35"}>{item.size}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button type="button" onClick={() => void submitTask(currentImageTypes)} disabled={isAnalyzing || isSubmitting} className="ml-auto flex h-11 min-w-11 items-center justify-center rounded-lg bg-white px-4 text-xl text-black shadow-lg transition hover:scale-[1.02] disabled:opacity-50" aria-label="提交生成">
                 ↑
               </button>
             </div>
           </div>
         </div>
 
-        {error ? <div className="mt-3 rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+        {error ? <div className="mt-3 rounded-lg border border-red-400/25 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
       </section>
 
       {generationMode === "image_to_image" ? (
-        <section className="mx-auto mt-5 max-w-4xl rounded-[20px] border border-white/[0.08] bg-white/[0.045] p-4 backdrop-blur">
+        <section className="mx-auto mt-4 max-w-5xl rounded-lg border border-white/[0.08] bg-white/[0.045] p-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="text-xs font-medium text-white/[0.5]">商品资料</div>
             <div className="text-[11px] text-white/[0.32]">用于自动组织提示词，不会生成在画面里</div>
@@ -565,27 +633,34 @@ export default function WorkspacePage() {
               <textarea value={sellingPoints} onChange={(e) => setSellingPoints(e.target.value)} rows={5} placeholder="每行一个卖点" className={`${inputClass} min-h-[148px] resize-none leading-6`} />
             </FieldBlock>
           </div>
+        </section>
+      ) : null}
 
-          <div className="mt-5 border-t border-white/[0.08] pt-4">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div className="text-xs font-medium text-white/[0.55]">本次输出清单</div>
-              <div className="text-[11px] text-white/[0.32]">{selectedTypes.length} / {imageTypeOptions.length}</div>
+      {generationMode === "image_to_image" ? (
+        <section className="mx-auto mt-4 max-w-5xl rounded-lg border border-white/[0.08] bg-white/[0.045] p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-medium text-white/[0.55]">本次输出</div>
+              <div className="mt-1 text-[11px] text-white/[0.34]">按所选图片类型生成套图。</div>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {imageTypeOptions.map((item) => {
-                const active = selectedTypes.includes(item.key);
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => toggleType(item.key)}
-                    className={`flex min-h-[52px] items-center justify-center rounded-xl border px-2.5 text-center text-xs font-medium transition ${active ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.045] text-white/55 hover:bg-white/10 hover:text-white/75"}`}
-                  >
-                    {item.shortTitle}
-                  </button>
-                );
-              })}
-            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-xs text-white/[0.55]">{selectedTypes.length} / {imageTypeOptions.length} 张</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {imageTypeOptions.map((item) => {
+              const active = selectedTypes.includes(item.key);
+              const hint = typeSizeHints[item.key];
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => toggleType(item.key)}
+                  className={`flex min-h-[72px] flex-col justify-between rounded-lg border px-3 py-2 text-left text-xs transition ${active ? "border-white bg-white text-black" : "border-white/10 bg-white/[0.035] text-white/55 hover:bg-white/10 hover:text-white/75"}`}
+                >
+                  <span className="font-medium">{item.shortTitle}</span>
+                  <span className={active ? "text-black/50" : "text-white/[0.32]"}>{hint.ratio} · {hint.size}</span>
+                </button>
+              );
+            })}
           </div>
         </section>
       ) : null}
@@ -598,7 +673,7 @@ export default function WorkspacePage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {plans.map((plan) => (
-              <article key={plan.type} className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.06]">
+              <article key={plan.type} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.06]">
                 <div className="aspect-[4/5] bg-white/5">
                   {plan.imageUrl ? (
                     <img src={plan.imageUrl} alt={plan.title} onClick={() => setLightboxPlan(plan)} className="h-full w-full cursor-zoom-in object-cover" />
@@ -623,8 +698,8 @@ export default function WorkspacePage() {
 
       {lightboxPlan?.imageUrl ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-6" onClick={() => setLightboxPlan(null)}>
-          <button type="button" onClick={() => setLightboxPlan(null)} className="absolute right-5 top-5 z-10 rounded-full bg-white px-4 py-2 text-sm text-black">关闭</button>
-          <img src={lightboxPlan.imageUrl} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-2xl object-contain" onClick={(event) => event.stopPropagation()} />
+          <button type="button" onClick={() => setLightboxPlan(null)} className="absolute right-5 top-5 z-10 rounded-lg bg-white px-4 py-2 text-sm text-black">关闭</button>
+          <img src={lightboxPlan.imageUrl} alt={lightboxPlan.title} className="max-h-full max-w-full rounded-lg object-contain" onClick={(event) => event.stopPropagation()} />
         </div>
       ) : null}
 
@@ -638,7 +713,7 @@ export default function WorkspacePage() {
       >
         <div className="space-y-3">
           {tasks.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">还没有任务。</div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">还没有任务。</div>
           ) : (
             tasks.map((task) => {
               const active = task.id === activeTaskId;
@@ -647,7 +722,7 @@ export default function WorkspacePage() {
                 <div
                   key={task.id}
                   onClick={() => setActiveTaskId(task.id)}
-                  className={`w-full rounded-2xl border p-4 text-left transition ${active ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                  className={`w-full rounded-lg border p-4 text-left transition ${active ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">

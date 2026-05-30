@@ -28,7 +28,10 @@ export type ImageTypeKey =
   | "virtual_try_on"
   | "handheld_product"
   | "lifestyle"
-  | "delist_notice";
+  | "delist_notice"
+  | "text_square"
+  | "text_portrait"
+  | "text_tall";
 
 export type ProductInput = {
   productName: string;
@@ -104,6 +107,8 @@ export type HistoryEntry = {
   imageCount: number;
   successCount: number;
   failCount: number;
+  status?: "success" | "partial" | "failed" | "running" | "canceled";
+  error?: string | null;
   plans: ImagePlan[];
 };
 

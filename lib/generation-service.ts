@@ -38,6 +38,39 @@ export type GenerationRunResult = {
   credits?: number;
 };
 
+const DEFAULT_IMAGE_CONCURRENCY = 5;
+
+function positiveInt(value: string | undefined, fallback: number) {
+  const parsed = Number.parseInt(value || "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const IMAGE_CONCURRENCY = positiveInt(process.env.GENERATION_CONCURRENCY, DEFAULT_IMAGE_CONCURRENCY);
+
+async function runWithConcurrency<T>(items: T[], limit: number, worker: (item: T) => Promise<void>) {
+  let nextIndex = 0;
+  let firstError: unknown;
+  const workerCount = Math.min(Math.max(1, limit), items.length);
+
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (!firstError) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      if (currentIndex >= items.length) return;
+
+      try {
+        await worker(items[currentIndex]);
+      } catch (error) {
+        firstError = error;
+        return;
+      }
+    }
+  });
+
+  await Promise.all(workers);
+  if (firstError) throw firstError;
+}
+
 export async function fileToAsset(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
   return {
@@ -91,7 +124,7 @@ async function saveGenerationImageResult(generationId: string, plan: ImagePlan) 
 
 export async function runGeneration(input: GenerationRunInput): Promise<GenerationRunResult> {
   let generationId = input.existingGenerationId || "";
-  const generatedPlans: ImagePlan[] = [];
+  let generatedPlans: ImagePlan[] = [];
   const logs: CallLog[] = [];
 
   try {
@@ -143,34 +176,39 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
     const productImageFile = isTextToImage || !input.productImage ? null : input.productImage;
     const referenceImages = input.referenceImages || [];
     const qualityMode: QualityMode = input.input.qualityMode === "hd" ? "hd" : "fast";
+    const generatedPlansByIndex: Array<ImagePlan | undefined> = new Array(plans.length);
+    let completedSteps = 0;
+    let canceled = false;
 
-    for (let index = 0; index < plans.length; index += 1) {
+    await runWithConcurrency(plans.map((plan, index) => ({ plan, index })), IMAGE_CONCURRENCY, async ({ plan, index }) => {
+      if (canceled) return;
       if (input.taskId) {
         const latestTask = await prisma.generationTask.findUnique({
           where: { id: input.taskId },
           select: { status: true }
         }).catch(() => null);
         if (latestTask?.status === "CANCELED") {
-          return { ok: false, generationId, plans: generatedPlans, logs, error: "任务已终止。" };
+          canceled = true;
+          return;
         }
       }
 
-      const plan = plans[index];
       const completed = completedByType.get(plan.type);
       if (completed?.imageUrl) {
-        generatedPlans.push({ ...plan, imageUrl: completed.imageUrl });
+        generatedPlansByIndex[index] = { ...plan, imageUrl: completed.imageUrl };
+        completedSteps += 1;
         await prisma.generationTask.updateMany({
           where: input.taskId ? { id: input.taskId } : { generationId, status: "RUNNING" },
           data: {
-            progress: Math.min(99, Math.round(((index + 1) / plans.length) * 100)),
-            message: `已跳过 ${index + 1}/${plans.length}，继续补剩余图片`
+            progress: Math.min(99, Math.round((completedSteps / plans.length) * 100)),
+            message: `已跳过 ${completedSteps}/${plans.length}，继续补剩余图片`
           }
         }).catch(() => undefined);
-        continue;
+        return;
       }
 
       await input.onProgress?.({
-        index,
+        index: completedSteps,
         total: plans.length,
         message: `正在生成 ${plan.title}`
       });
@@ -182,21 +220,40 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
       logs.push(result.log);
       await writeApiLog(input.userId, "image.generate", result.log);
 
+      let generatedPlan: ImagePlan;
       if (result.ok) {
         const imageUrl = await persistGeneratedImageUrl(result.imageUrl, generationId, plan.type);
-        generatedPlans.push({ ...plan, imageUrl });
+        generatedPlan = { ...plan, imageUrl };
       } else {
-        generatedPlans.push({ ...plan, error: result.error });
+        generatedPlan = { ...plan, error: result.error };
       }
-      await saveGenerationImageResult(generationId, generatedPlans[generatedPlans.length - 1]);
+      generatedPlansByIndex[index] = generatedPlan;
+      await saveGenerationImageResult(generationId, generatedPlan);
 
+      completedSteps += 1;
       await prisma.generationTask.updateMany({
         where: input.taskId ? { id: input.taskId } : { generationId, status: "RUNNING" },
         data: {
-          progress: Math.min(99, Math.round(((index + 1) / plans.length) * 100)),
-          message: `已完成 ${index + 1}/${plans.length}`
+          progress: Math.min(99, Math.round((completedSteps / plans.length) * 100)),
+          message: `已完成 ${completedSteps}/${plans.length}`
         }
       }).catch(() => undefined);
+    });
+
+    generatedPlans = generatedPlansByIndex.filter((plan): plan is ImagePlan => Boolean(plan));
+
+    if (canceled) {
+      const successCount = generatedPlans.filter((plan) => Boolean(plan.imageUrl)).length;
+      await reconcileGenerationCredits(input.userId, generationId, successCount, "任务终止退回").catch(() => undefined);
+      await prisma.generation.update({
+        where: { id: generationId },
+        data: {
+          successCount,
+          failCount: Math.max(0, plans.length - successCount),
+          creditsCharged: successCount
+        }
+      }).catch(() => undefined);
+      return { ok: false, generationId, plans: generatedPlans, logs, error: "任务已终止。" };
     }
 
     const successCount = generatedPlans.filter((plan) => Boolean(plan.imageUrl)).length;
@@ -280,7 +337,7 @@ export async function runGeneration(input: GenerationRunInput): Promise<Generati
 }
 
 export function buildTaskTitle(input: ProductInput) {
-  return input.productName?.trim() || (input.generationMode === "text_to_image" ? "文生图任务" : "图片生成任务");
+  return input.productName?.trim() || (input.generationMode === "text_to_image" ? "文字生图任务" : "图片生成任务");
 }
 
 export function serializeGenerationInput(input: ProductInput) {

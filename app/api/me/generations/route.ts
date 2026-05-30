@@ -19,6 +19,15 @@ export async function GET(request: Request) {
       include: {
         images: {
           orderBy: { createdAt: "asc" }
+        },
+        tasks: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            status: true,
+            error: true,
+            message: true
+          }
         }
       }
     });
@@ -55,14 +64,36 @@ export async function GET(request: Request) {
         }
       }
 
+      const latestTask = generation.tasks[0];
+      const imageSuccessCount = generation.images.filter((image) => image.ok && image.imageUrl).length;
+      const imageFailCount = generation.images.filter((image) => !image.ok || image.error).length;
+      const successCount = Math.max(generation.successCount, imageSuccessCount);
+      const failCount = latestTask?.status === "FAILED" && successCount === 0 && generation.failCount === 0
+        ? Math.max(1, generation.imageCount)
+        : Math.max(generation.failCount, imageFailCount);
+      const status: HistoryEntry["status"] =
+        latestTask?.status === "PENDING" || latestTask?.status === "RUNNING"
+          ? "running"
+          : latestTask?.status === "CANCELED"
+            ? "canceled"
+            : successCount > 0 && successCount >= generation.imageCount && failCount === 0
+              ? "success"
+              : successCount > 0
+                ? "partial"
+                : latestTask?.status === "FAILED" || failCount > 0
+                  ? "failed"
+                  : "running";
+
       return {
         id: generation.id,
         timestamp: generation.createdAt.getTime(),
         productName: generation.productName,
         language: input.language,
         imageCount: generation.imageCount,
-        successCount: generation.successCount,
-        failCount: generation.failCount,
+        successCount,
+        failCount,
+        status,
+        error: latestTask?.error || latestTask?.message || null,
         plans
       };
     });
